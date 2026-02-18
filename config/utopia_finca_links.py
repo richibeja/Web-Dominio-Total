@@ -7,23 +7,29 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Enlaces principales (telegram desde .env LINK_VENTAS_TELEGRAM si existe)
-# Enlaces principales (telegram desde .env LINK_VENTAS_TELEGRAM si existe)
-_default_telegram = "https://web-dominio-total.vercel.app"
-_default_telegram_vip = "https://t.me/+P8k5j4l5m6n7o8p9" # Link de la Comunidad VIP (inventado, cámbialo en .env)
-_default_fanvue = "https://www.fanvue.com/luzdeaurorafeyamor"
+# Enlaces DE ORO (AQUI ESTA EL DINERO)
 LINKS = {
-    "linktree": "https://linktr.ee/SociosAnbelClub",
-    "instagram": "https://www.instagram.com/SociosAnbelClub/",
+    # 1. Página de Ventas (Embudo Principal)
+    "sales_page": "https://web-dominio-total.vercel.app",
+
+    # 2. Comunidad VIP (Telegram) - Donde viven los fans
     "telegram": "https://t.me/LuzDeAuroraOficial",
     "telegram_bot": "@LuzDeAuroraOficial",
-    "youtube": "https://youtube.com/@UtopiaFinca",  # Verificar URL exacta del canal
-    "fanvue": os.getenv("FANVUE_LINK", _default_fanvue).strip() or _default_fanvue,
-    "fanvue_profile": os.getenv("FANVUE_LINK", _default_fanvue).strip() or _default_fanvue,
-    "whatsapp": f"https://wa.me/{os.getenv('WHATSAPP_NUMBER', '+57 322 719 8007').replace('+', '').replace(' ', '')}",
-    "ebook_payment": "https://pay.hotmart.com/E104450083T" # Link de Pago Ebook
-}
 
-# Claves y tokens de API
+    # 3. Checkout HOTMART (Ebook $7) - Venta rápida
+    "ebook_payment": "https://pay.hotmart.com/E104450083T",
+    
+    # 4. Suscripción Mensual (Fanvue) - Venta recurrente
+    "fanvue": "https://www.fanvue.com/luzdeaurorafeyamor",
+    "fanvue_profile": "https://www.fanvue.com/luzdeaurorafeyamor",
+
+    # 5. Redes de Tráfico
+    "instagram": "https://www.instagram.com/luzdeaurorafeyamor/",
+    "whatsapp": f"https://wa.me/{os.getenv('WHATSAPP_NUMBER', '+57 322 719 8007').replace('+', '').replace(' ', '')}",
+    
+    # Extras
+    "linktree": "https://linktr.ee/SociosAnbelClub",
+}
 API_KEYS = {
     "fanvue_key": "6C/wYuCc/g5L7Sv",  # Clave de Fanvue
 }

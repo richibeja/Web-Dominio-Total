@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ebook - Círculo Interno</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;600&display=swap');
+
+        :root {
+            --gold: #D4AF37;
+            --dark-gold: #AA8C2C;
+            --black: #0a0a0a;
+            --dark-gray: #1a1a1a;
+            --text-gray: #e0e0e0;
+            --accent-red: #8a0303;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--black);
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text-gray);
+            -webkit-print-color-adjust: exact;
+        }
+
+        /* --- LOGO FLOTANTE FANVUE (SOLUCIÓN GRATIS) --- */
+        .member-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 0.6rem;
+            color: var(--gold);
+            text-decoration: none;
+            z-index: 100;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            flex-direction: column;
+            line-height: 1.2;
+            transition: transform 0.3s;
+        }
+
+        .member-badge span {
+            display: block;
+            margin-top: 2px;
+            font-weight: bold;
+        }
+
+        .member-badge:hover {
+            transform: scale(1.05);
+            background: black;
+        }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            /* A4 */
+            background: var(--dark-gray);
+            margin: 20px auto;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+            page-break-after: always;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- PORTADA ESTILO REVISTA / DOSSIER --- */
+        .cover {
+            /* Imagen subida por el usuario: Silver Fox & Elegancia */
+            background: url('portada_ebook_pareja_lujo_1771024575209.jpg') no-repeat center center;
+            background-size: cover;
+            position: relative;
+        }
+
+        .cover-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.8) 70%, #000 100%);
+        }
+
+        .cover-content {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .brand-top {
+            text-align: center;
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 15px;
+            margin: 0 40px;
+        }
+
+        .brand-top span {
+            font-family: 'Montserrat', sans-serif;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            color: var(--gold);
+        }
+
+        .title-section {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .title-section h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 5rem;
+            line-height: 0.9;
+            color: white;
+            text-transform: uppercase;
+            margin: 0;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .title-section h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            font-size: 1.2rem;
+            letter-spacing: 4px;
+            color: #ccc;
+            margin-top: 15px;
+            text-transform: uppercase;
+        }
+
+        .exclusive-badge {
+            background: var(--accent-red);
+            color: white;
+            padding: 5px 15px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        /* --- CONTENIDO INTERNO --- */
+        .content-page {
+            padding: 50px;
+            box-sizing: border-box;
+            background: white;
+            /* Interior en blanco para lectura limpia */
+            color: #333;
+        }
+
+        .content-page.dark {
+            background: var(--dark-gray);
+            color: var(--text-gray);
+        }
+
+        h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--black);
+            border-left: 4px solid var(--gold);
+            padding-left: 20px;
+        }
+
+        .dark h3 {
+            color: var(--gold);
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        .highlight {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--accent-red);
+            text-align: center;
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+            padding: 20px 0;
+            margin: 30px 0;
+        }
+
+        /* --- MEDIA PLAYERS SIMULADOS --- */
+        .media-player {
+            background: #111;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border: 1px solid #333;
+        }
+
+        .play-btn {
+            width: 50px;
+            height: 50px;
+            background: var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            font-size: 1.5rem;
+            color: black;
+            font-weight: bold;
+        }
+
+        .track-info {
+            flex: 1;
+        }
+
+        .track-title {
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: block;
+        }
+
+        .track-subtitle {
+            color: #888;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .placeholder-note {
+            font-size: 0.7rem;
+            color: #f00;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        /* --- CTA FINAL --- */
+        .cta-box {
+            background: url('https://www.transparenttextures.com/patterns/black-linen.png'), #000;
+            color: white;
+            text-align: center;
+            padding: 60px 40px;
+            margin-top: auto;
+            border: 1px solid var(--gold);
+        }
+
+        .gold-btn {
+            background: linear-gradient(135deg, #b38728, #fbf5b7, #bf953f);
+            color: black;
+            padding: 20px 40px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 30px;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+        }
+
+        /* --- PAGINACIÓN --- */
+        .footer {
+            position: absolute;
+            bottom: 30px;
+            left: 50px;
+            right: 50px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .dark .footer {
+            border-color: #333;
+            color: #666;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+                background: none;
+            }
+
+            .page {
+                margin: 0;
+                width: 100%;
+                height: 100%;
+                box-shadow: none;
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- PÁGINA 1: PORTADA PREMIUM -->
+    <div class="page cover">
+        <a href="https://www.fanvue.com/luzdeaurorafeyamor" target="_blank" class="member-badge">
+            <span style="font-size: 1.5rem;">👑</span>
+            <span>MIEMBROS<br>VIP</span>
+        </a>
+        <div class="cover-overlay"></div>
+        <div class="cover-content">
+            <div class="brand-top">
+                <span>Círculo Interno • Dossier Confidencial</span>
+            </div>
+
+            <div class="title-section">
+                <span class="exclusive-badge">Solo para Miembros</span>
+                <h1>Dominio<br><span style="color: var(--gold);">Total</span></h1>
+                <h2>La Psicología Oculta del Placer Femenino</h2>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 20px;">
+                <p style="color: white; font-size: 0.9rem; letter-spacing: 2px;">POR AURORA LUZ</p>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Barcode_EAN8.svg/1200px-Barcode_EAN8.svg.png"
+                    style="width: 100px; opacity: 0.7; filter: invert(1);">
+            </div>
+        </div>
+    </div>
+
+    <!-- PÁGINA 2: INTRODUCCIÓN + AUDIO -->
+    <div class="page content-page">
+        <a href="https://www.fanvue.com/luzdeaurorafeyamor" target="_blank" class="member-badge">
+            <span style="font-size: 1.5rem;">👑</span>
+            <span>MIEMBROS<br>VIP</span>
+        </a>
+        <h3>Bienvenido al Club</h3>
+        <p>Si tienes este documento en tus manos, es porque has decidido dejar de ser un turista en la cama para
+            convertirte en un residente del placer.</p>
+        <p>La mayoría de los hombres operan desde la ansiedad. Entran, toman lo que pueden y salen corriendo antes de
+            que se note su falta de control. Tú vas a aprender a quedarte.</p>
+
+        <div class="highlight">
+            "El control no es apretar los dientes. El control es entender cómo funciona tu sistema nervioso."
+        </div>
+
+        <p>Antes de leer una sola línea más, necesito que escuches esto. Es personal.</p>
+
+        <!-- REPRODUCTOR SIMULADO (VISUAL) -->
+        <div class="media-player"
+            style="background: #222; border: 1px solid #444; display: flex; align-items: center; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <div
+                style="width: 40px; height: 40px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                <span style="color: black; font-weight: bold;">▶</span>
+            </div>
+            <div>
+                <strong style="color: white; display: block;">Audio de Bienvenida - Aurora</strong>
+                <span style="color: #888; font-size: 0.8rem;">0:45 • Escuchar antes de leer</span>
+            </div>
+        </div>
+        <div class="placeholder-note" style="color: #666; font-size: 0.7rem; margin-top: -15px; margin-bottom: 20px;">*
+            Espacio para Audio (FlipHTML5)</div>
+
+        <div class="footer">
+            <span>Confidencial</span>
+            <span>02</span>
+        </div>
+    </div>
+
+    <!-- PÁGINA 3: EL DIAGNÓSTICO -->
+    <div class="page content-page">
+        <a href="https://www.fanvue.com/luzdeaurorafeyamor" target="_blank" class="member-badge">
+            <span style="font-size: 1.5rem;">👑</span>
+            <span>MIEMBROS<br>VIP</span>
+        </a>
+        <h3>El Mito de la "Sensibilidad"</h3>
+        <p>Te han mentido. Te han dicho que terminas rápido porque eres "demasiado sensible" o porque "te excitas
+            mucho". Falso.</p>
+        <p>Terminas rápido porque tu cuerpo interpreta la excitación extrema como <strong>PELIGRO (Modo
+                Simpático)</strong>.</p>
+        <p>Tu cerebro primitivo siente la intensidad y grita: <em>"¡Demasiada energía! ¡Libérala y huye para
+                sobrevivir!"</em>. Es el
+            mismo mecanismo que se activa si te persigue un león.</p>
+        <p>Para durar 30, 40 o 60 minutos, no necesitas pensar en béisbol ni usar cremas que te duermen. Necesitas
+            enseñarle a tu cerebro a estar cómodo en el fuego (Modo Parasimpático).</p>
+
+        <p>Vamos a reprogramar ese reflejo con 3 herramientas clave.</p>
+
+        <div class="footer">
+            <span>Dominio Total</span>
+            <span>03</span>
+        </div>
+    </div>
+
+    <!-- PÁGINA 4: EL SEMÁFORO (NUEVO) -->
+    <div class="page content-page dark">
+        <a href="https://www.fanvue.com/luzdeaurorafeyamor" target="_blank" class="member-badge">
+            <span style="font-size: 1.5rem;">👑</span>
+            <span>MIEMBROS<br>VIP</span>
+        </a>
+        <h3>Herramienta #1: El Semáforo del Placer</h3>
+        <p>El error #1 es no saber dónde estás. Debes monitorear tu excitación del 1 al 10 constantemente.</p>
+
+        <div style="margin: 30px 0;">
+            <div
+                style="background: rgba(0,255,0,0.1); border-left: 4px solid #0f0; padding: 15px; margin-bottom: 15px;">
+                <strong style="color: #0f0;">ZONA VERDE (1-5):</strong><br>
+                Seguro. Disfruta, juega, varía el ritmo. Aquí tienes el control total.
+            </div>
+            <div
+                style="background: rgba(255,255,0,0.1); border-left: 4px solid #ff0; padding: 15px; margin-bottom: 15px;">
+                <strong style="color: #ff0;">ZONA AMARILLA (6-8):</strong><br>
+                Precaución. La sensación es intensa. Si sigues igual, pasarás al rojo en segundos. Aquí debes aplicar
+                las técnicas de freno.
+            </div>
+            <div style="background: rgba(255,0,0,0.1); border-left: 4px solid #f00; padding: 15px;">
+                <strong style="color: #f00;">ZONA ROJA (9-10):</strong><br>
+                Punto de NO Retorno. Ya es tarde. La eyaculación es inevitable fisiológicamente.
+            </div>
+        </div>
+
+        <p><strong>TU OBJETIVO:</strong> Aprender a vivir en el nivel 7 u 8. Ahí es donde ella siente tu potencia, pero
+            tú no cruzas al 9.</p>
+
+        <p><em>¿Cómo te frenas sin detenerte? Con la siguiente herramienta...</em></p>
+
+        <div class="footer">
+            <span>Herramienta 1</span>
+            <span>04</span>
+        </div>
+    </div>
+
+    <!-- PÁGINA 5: FRENO FÍSICO (NUEVO) -->
+    <div class="page content-page">
+        <a href="https://www.fanvue.com/luzdeaurorafeyamor" target="_blank" class="member-badge">
+            <span style="font-size: 1.5rem;">👑</span>
+            <span>MIEMBROS<br>VIP</span>
+        </a>
+        <h3>Herramienta #2: El Freno de Emergencia Físico</h3>
+        <p>Muchos hombres hacen fuerza hacia adentro (Kegel Normal) cuando sienten ganas. ¡ERROR! Eso tensióna más la
+            próstata y acelera el final.</p>
+        <p>Necesitas hacer lo opuesto: <strong>KEGEL INVERSO</strong>.</p>
+
+        <div class="highlight" style="border-color: var(--gold); color: var(--black);">
+            "Empuja suavemente hacia afuera, como si intentaras orinar un poco."
+        </div>
+
+        <p>Al hacer esto en la Zona Amarilla (Nivel 7-8), relajas el suelo pélvico y le envías una señal física a tu
+            cerebro de "todo está bien, relájate".</p>
+        <p><strong>Ejercicio:</strong> Practica esto ahora. Inhala profundo y empuja suavemente el suelo pélvico hacia
+            afuera. Siente cómo la tensión baja.</p>
+
+        <div class="footer">
+            <span>Herramienta 2</span>
+            <span>05</span>
+        </div>
+    </div>
+
+    <!-- PÁGINA 6: RESPIRACIÓN (VALOR) -->
+    <div class="page content-page dark">
+        <a href="https://www.fanvue.com/luzdeaurorafeyamor" target="_blank" class="member-badge">
+            <span style="font-size: 1.5rem;">👑</span>
+            <span>MIEMBROS<br>VIP</span>
+        </a>
+        <h3>Herramienta #3: Reset Mental (Protocolo 4-7-8)</h3>
+        <p>Esta es la herramienta de emergencia definitiva. Úsala combinada con el freno físico.</p>
+
+        <div
+            style="background: rgba(255,255,255,0.05); padding: 20px; border-left: 2px solid var(--gold); margin: 20px 0;">
+            <p style="color:white; margin:0;"><strong>1. INHALA</strong> por la nariz en 4 segundos.<br>
+                <strong>2. SOSTÉN</strong> el aire dentro 7 segundos (calma el corazón).<br>
+                <strong>3. EXHALA</strong> fuerte por la boca en 8 segundos.
+            </p>
+        </div>
+
+        <p>He grabado una guía para que la practiques ahora mismo.</p>
+
+        <!-- REPRODUCTOR SIMULADO 2 -->
+        <div class="media-player" style="border-color: var(--gold);">
+            <div class="play-btn">▶</div>
+            <div class="track-info">
+                <span class="track-title">Ejercicio Guiado: Respiración de Control</span>
+                <span class="track-subtitle">Técnica Anti-Ansiedad • mp3</span>
+            </div>
+        </div>
+        <div class="placeholder-note">* Coloca 'audio_respiracion_478.mp3' aquí.</div>
+
+        <div class="footer">
+            <span>Herramienta 3</span>
+            <span>06</span>
+        </div>
+    </div>
+
+    <!-- PÁGINA 7: EL SECRETO DEL EDGING (NUEVO - PUENTE A LA VENTA) -->
+    <div class="page content-page">
+        <a href="https://www.fanvue.com/luzdeaurorafeyamor" target="_blank" class="member-badge">
+            <span style="font-size: 1.5rem;">👑</span>
+            <span>MIEMBROS<br>VIP</span>
+        </a>
+        <h3>El Arte del "Edging" (Bordeado)</h3>
+        <p>Ahora tienes las piezas: Semáforo, Freno Físico y Respiración. ¿Cómo se usan en el sexo?</p>
+        <p>Se llama Edging. Consiste en subir deliberadamente a la Zona Amarilla (8), y usar las herramientas para bajar
+            a la Zona Verde (4) sin detener el acto por completo.</p>
+        <p>Cada vez que subes y bajas, tu resistencia aumenta. Es como levantar pesas para tu pene.</p>
+        <p>Pero cuidado: Si no sabes <strong>moverte</strong> mientras bajas la excitación, ella se aburrirá.</p>
+        <p style="font-style: italic; color: #888;">"El secreto no es detenerse, es cambiar la cualidad del movimiento."
+        </p>
+
+        <div class="footer">
+            <span>Táctica Avanzada</span>
+            <span>07</span>
+        </div>
+    </div>
+
+    <!-- PÁGINA 8: VENTA FINAL (UPSELL) -->
+    <div class="page content-page" style="background: #000; color: white; justify-content: center; text-align: center;">
+        <a href="https://www.fanvue.com/luzdeaurorafeyamor" target="_blank" class="member-badge">
+            <span style="font-size: 1.5rem;">👑</span>
+            <span>MIEMBROS<br>VIP</span>
+        </a>
+
+        <h1 style="font-family: 'Playfair Display'; color: var(--gold); font-size: 3rem; margin-bottom: 10px;">
+            El Siguiente Nivel
+        </h1>
+        <p style="color: #aaa; max-width: 80%; margin: 0 auto;">
+            Saber la teoría del Kegel Inverso y el Edging es una cosa. <br>
+            <strong>VERLO EN ACCIÓN</strong> y tener una rutina de entrenamiento guiada es otra.
+        </p>
+
+        <div class="cta-box" style="border:none; margin: 30px 0;">
+            <p style="margin-bottom: 20px;">Si quieres reprogramar tu reflejo eyaculatorio para siempre con un sistema
+                visual paso a paso...</p>
+
+            <h2
+                style="font-family: 'Montserrat'; text-transform: uppercase; letter-spacing: 3px; font-size: 1.5rem; color: var(--gold);">
+                MÉTODO DOMINIO TOTAL
+            </h2>
+            <ul
+                style="list-style: none; padding: 0; color: #ccc; margin: 20px 0; text-align: left; display: inline-block;">
+                <li>✓ Video-Rutinas de Ejercicios PC</li>
+                <li>✓ Guía Visual de Posiciones de Retardo</li>
+                <li>✓ Técnicas de Movimiento Disociado</li>
+            </ul>
+
+            <div class="gold-btn">
+                ACCEDER AL MÉTODO COMPLETO
+            </div>
+            <p style="font-size: 0.8rem; margin-top: 15px; opacity: 0.6;">(Oferta Especial por tiempo limitado)</p>
+        </div>
+
+        <div class="placeholder-note">* Pon un HOTSPOT (Link) gigante sobre este botón hacia tu link de Hotmart.</div>
+    </div>
+
+    <!-- PÁGINA 9: CONTRA-PORTADA (CLUB VIP) -->
+    <div class="page cover" style="background-image: url('portada_ebook_pareja_lujo_1771024575209.jpg');">
+        <a href="https://www.fanvue.com/luzdeaurorafeyamor" target="_blank" class="member-badge">
+            <span style="font-size: 1.5rem;">👑</span>
+            <span>MIEMBROS<br>VIP</span>
+        </a>
+        <div class="cover-overlay"
+            style="background: linear-gradient(to top, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.4) 100%);"></div>
+        <div class="cover-content" style="justify-content: center; text-align: center;">
+
+            <div style="margin-bottom: 40px;">
+                <h1 style="font-family: 'Playfair Display'; font-size: 3rem; color: white; margin: 0;">Laboratorio
+                    Visual</h1>
+                <p style="color: #ddd; font-size: 1.2rem; margin-top: 10px;">¿Quieres ver las técnicas en acción?</p>
+            </div>
+
+            <div class="cta-box"
+                style="background: rgba(0,0,0,0.6); border: 1px solid var(--gold); max-width: 400px; margin: 0 auto;">
+                <p style="color: white; margin-bottom: 20px;">Únete a nuestro <strong>Círculo Interno</strong> donde
+                    nuestras instructoras demuestran las técnicas sin censura.</p>
+
+                <div class="gold-btn"
+                    style="margin-top: 10px; background: linear-gradient(45deg, #FF0055, #FF00AA); color: white; border: none; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                    💎 ENTRAR AL CLUB VIP
+                </div>
+                <p style="font-size: 0.8rem; margin-top: 15px; color: #ccc;">(Demostraciones Visuales Reales)</p>
+            </div>
+
+            <div class="footer" style="border-top: none; justify-content: center; margin-top: auto;">
+                <span style="color: #666;">© 2024 Círculo Interno • Dominio Total</span>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+
+</html>

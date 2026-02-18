@@ -1,0 +1,26 @@
+{
+  "8142998355": {
+    "favorite_model": null,
+    "preferences": [],
+    "custom_content_requests": [],
+    "message_count": 2,
+    "has_mentioned_financial_need": false,
+    "last_financial_mention": null
+  },
+  "6787521642": {
+    "favorite_model": null,
+    "preferences": [],
+    "custom_content_requests": [],
+    "message_count": 6,
+    "has_mentioned_financial_need": true,
+    "last_financial_mention": 5
+  },
+  "8062997260": {
+    "favorite_model": null,
+    "preferences": [],
+    "custom_content_requests": [],
+    "message_count": 2,
+    "has_mentioned_financial_need": false,
+    "last_financial_mention": null
+  }
+}

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aurora 3.0 — Qwen Edition</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Outfit', 'sans-serif'] },
+          colors: {
+            rose: { 50: '#fff1f2', 100: '#ffe4e6', 200: '#fecdd3', 300: '#fda4af', 400: '#fb7185', 500: '#f43f5e', 600: '#e11d48', 700: '#be123c', 800: '#9f1239', 900: '#881337' },
+            slate: { 850: '#172033', 950: '#0c1222' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .gradient-bg {
+      background: linear-gradient(-45deg, #000000, #1a0b1e, #0c1222, #2d0b2e);
+      background-size: 400% 400%;
+      animation: gradient 15s ease infinite;
+    }
+
+    @keyframes gradient {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+
+<body class="gradient-bg min-h-screen text-slate-100 antialiased">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <header class="text-center mb-10">
+      <div
+        class="inline-block px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 text-[10px] font-bold tracking-widest uppercase mb-4">
+        Version 3.0 Gold</div>
+      <h1
+        class="text-4xl font-black bg-gradient-to-r from-yellow-400 via-white to-yellow-600 bg-clip-text text-transparent italic">
+        AURORA QWEN</h1>
+      <p class="text-slate-500 mt-2 font-light tracking-wide">Elite Operations Center (Instagram & Telegram)</p>
+    </header>
+
+    <!-- Estado del Sistema -->
+    <section class="rounded-2xl bg-slate-800/60 border border-slate-700/50 p-4 mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
+          <span class="font-medium">Bot Activo (Instagram & Telegram)</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-slate-300 text-sm font-medium">Modo Automático (IA)</span>
+          <button id="autoModeToggle" type="button" role="switch" aria-checked="false"
+            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-600 transition-colors focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:ring-offset-slate-800">
+            <span id="autoModeThumb"
+              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition translate-x-0.5"></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Panel de Doble Columna -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <!-- Embudo: estado por chat -->
+      <section class="rounded-2xl bg-slate-800/60 border border-slate-700/50 overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-700/50 bg-slate-800/40">
+          <h2 class="text-lg font-semibold text-slate-200">Embudo Instagram</h2>
+        </div>
+        <div id="embudoList" class="p-4 space-y-3 min-h-[200px] max-h-[400px] overflow-y-auto bg-slate-900/40">
+          <p class="text-slate-500 text-sm text-center py-10">Cargando estados de Instagram...</p>
+        </div>
+        <div class="px-4 py-2 border-t border-slate-700/50 flex flex-wrap gap-3 text-[10px] text-slate-400">
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Fase 1</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Fase 2</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Fase 3
+            (Venta)</span>
+        </div>
+      </section>
+
+      <!-- Visor de Logs de Instagram -->
+      <section class="rounded-2xl bg-slate-800/60 border border-slate-700/50 overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-700/50 bg-slate-800/40">
+          <h2 class="text-lg font-semibold text-slate-200">Actividad en Vivo</h2>
+        </div>
+        <div id="logMonitor"
+          class="h-[200px] md:h-[400px] overflow-y-auto p-4 space-y-1 bg-black/40 font-mono text-[10px] text-emerald-400/90 leading-tight">
+          <p class="text-slate-600">Conectando con el registro...</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Responder a Telegram -->
+    <section class="rounded-2xl bg-slate-800/60 border border-slate-700/50 p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold text-slate-200">Enviar nota de voz a Telegram</h2>
+        <span
+          class="px-2 py-0.5 rounded text-[10px] bg-rose-600/30 text-rose-400 border border-rose-600/50 font-medium tracking-wider">MOTOR
+          IA: QWEN3 ACTIVADO</span>
+      </div>
+      <div class="space-y-4">
+        <textarea id="ttsText" rows="3" placeholder="Escribe lo que quieres que diga la voz..."
+          class="w-full rounded-xl bg-slate-900/80 border border-slate-600 text-slate-100 placeholder-slate-500 px-4 py-3 resize-none focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500 outline-none transition"></textarea>
+        <div class="flex flex-wrap items-center gap-3">
+          <div
+            class="flex items-center gap-3 bg-slate-900/90 border border-rose-500/30 rounded-xl px-4 py-3 ring-1 ring-white/5 shadow-inner">
+            <div class="flex flex-col">
+              <span class="text-rose-400 text-[9px] font-bold uppercase tracking-[0.2em] mb-0.5">Idioma / Voz</span>
+              <select id="voiceSelect"
+                class="bg-transparent text-slate-50 text-sm font-medium focus:outline-none cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23fb7185%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px] bg-[right_0px_center] bg-no-repeat">
+                <option value="qwen" class="bg-slate-900 text-white" selected>✨ Qwen3 (Identidad Única)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Estilo de Voz (Qwen3) -->
+          <div id="styleContainer"
+            class="flex items-center gap-3 bg-slate-900/40 border border-slate-700/50 rounded-xl px-4 py-3 ring-1 ring-white/5">
+            <div class="flex flex-col">
+              <span class="text-slate-500 text-[9px] font-bold uppercase tracking-[0.2em] mb-0.5 text-center">Estilo
+                Emocional</span>
+              <select id="styleSelect"
+                class="bg-transparent text-slate-300 text-sm font-medium focus:outline-none cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394a3b8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px] bg-[right_0px_center] bg-no-repeat">
+                <option value="Sonrisa" class="bg-slate-900 text-white">😊 Sonrisa Real</option>
+                <option value="Mia" class="bg-slate-900 text-white">✨ Mia (Elite Gold)</option>
+                <option value="Stella" class="bg-slate-900 text-white">🌸 Stella (Elite Rose)</option>
+                <option value="EnglishBabe" class="bg-slate-900 text-white">✨ English Babe (Gringa)</option>
+                <option value="Bodega" class="bg-slate-900 text-white">🎙️ Bodega (Natural)</option>
+              </select>
+            </div>
+          </div>
+          <button id="generateAudio"
+            class="flex-1 px-6 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(79,70,229,0.3)] flex items-center justify-center gap-2">
+            <span>✨</span> GENERAR CON QWEN
+          </button>
+          <button id="sendAudio"
+            class="flex-1 px-6 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-30 disabled:grayscale flex items-center justify-center gap-2"
+            disabled>
+            <span>🚀</span> ENVIAR A TELEGRAM
+          </button>
+        </div>
+        <audio id="audioPlayer" class="w-full hidden" controls></audio>
+        <p id="ttsError" class="text-rose-400 text-sm hidden"></p>
+      </div>
+    </section>
+
+    <!-- Tu link Fanvue -->
+    <section class="rounded-2xl bg-slate-800/60 border border-slate-700/50 p-4">
+      <div class="flex gap-2 items-center">
+        <span class="text-slate-400 text-sm">Tu link actual:</span>
+        <a id="fanvueLink" href="#" target="_blank" rel="noopener"
+          class="text-rose-400 hover:text-rose-300 font-medium truncate flex-1">—</a>
+        <button id="copyFanvue" type="button"
+          class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs transition disabled:opacity-50"
+          disabled>Copiar Link</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const autoModeToggle = document.getElementById('autoModeToggle');
+    const autoModeThumb = document.getElementById('autoModeThumb');
+    const embudoList = document.getElementById('embudoList');
+    const fanvueLink = document.getElementById('fanvueLink');
+    const copyFanvue = document.getElementById('copyFanvue');
+    const ttsText = document.getElementById('ttsText');
+    const voiceSelect = document.getElementById('voiceSelect');
+    const styleSelect = document.getElementById('styleSelect');
+    const styleContainer = document.getElementById('styleContainer');
+    const generateAudio = document.getElementById('generateAudio');
+    const sendAudio = document.getElementById('sendAudio');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const ttsError = document.getElementById('ttsError');
+    const logMonitor = document.getElementById('logMonitor');
+
+    let lastGeneratedAudioPath = null;
+    let autoMode = false;
+
+    // --- VISOR DE LOGS ---
+    function appendLog(text) {
+      if (!text) return;
+      const p = document.createElement('p');
+      p.className = 'border-l border-emerald-500/30 pl-2 mb-1';
+      p.textContent = text;
+      logMonitor.appendChild(p);
+      logMonitor.scrollTop = logMonitor.scrollHeight;
+      if (logMonitor.children.length > 50) logMonitor.removeChild(logMonitor.firstChild);
+    }
+
+    setInterval(async () => {
+      try {
+        const r = await fetch('/api/instagram-logs');
+        const data = await r.json();
+        if (data.logs) {
+          logMonitor.innerHTML = '';
+          data.logs.split('\n').filter(l => l.trim()).forEach(appendLog);
+        }
+      } catch (e) { }
+    }, 4000);
+
+    // --- MODO AUTOMÁTICO ---
+    function setAutoModeUI(on) {
+      autoMode = on;
+      autoModeToggle.setAttribute('aria-checked', on);
+      if (on) {
+        autoModeToggle.classList.replace('bg-slate-600', 'bg-rose-500');
+        autoModeThumb.classList.replace('translate-x-0.5', 'translate-x-5');
+      } else {
+        autoModeToggle.classList.replace('bg-rose-500', 'bg-slate-600');
+        autoModeThumb.classList.replace('translate-x-5', 'translate-x-0.5');
+      }
+    }
+
+    autoModeToggle.addEventListener('click', async () => {
+      const next = !autoMode;
+      setAutoModeUI(next);
+      try {
+        await fetch('/api/auto-mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ autoMode: next })
+        });
+      } catch (e) { }
+    });
+
+    socket.on('autoMode', (value) => setAutoModeUI(!!value));
+
+    // --- EMBUDO ---
+    socket.on('embudo', (list) => {
+      embudoList.innerHTML = '';
+      if (!list || list.length === 0) {
+        embudoList.innerHTML = '<p class="text-slate-500 text-sm text-center py-10">Esperando actividad de Instagram...</p>';
+        return;
+      }
+      const labels = ['Enamoramiento', 'Calentamiento', 'Venta / Fanvue'];
+      const colors = ['bg-blue-500', 'bg-amber-500', 'bg-rose-500'];
+
+      list.sort((a, b) => b.hours_ago - a.hours_ago).forEach((c) => {
+        const phase = Math.min(3, Math.max(1, c.phase || 1));
+        const name = c.username || c.chatName || 'Usuario';
+        const div = document.createElement('div');
+        div.className = 'bg-slate-800/40 p-3 rounded-xl border border-slate-700/30';
+        div.innerHTML = `
+          <div class="flex justify-between items-start mb-1">
+            <span class="font-medium text-slate-200 truncate">${name}</span>
+            <span class="text-[10px] text-slate-500">${c.hours_ago}h ago</span>
+          </div>
+          <p class="text-xs text-slate-400 truncate mb-2">"${c.body || '...'}"</p>
+          <div class="flex gap-1">
+            ${[1, 2, 3].map(p => `<span class="h-1.5 flex-1 rounded-full ${p <= phase ? colors[p - 1] : 'bg-slate-700'}"></span>`).join('')}
+          </div>
+        `;
+        embudoList.appendChild(div);
+      });
+    });
+
+    // --- TTS Y AUDIO ---
+    generateAudio.addEventListener('click', async () => {
+      const text = ttsText.value.trim();
+      if (!text) return;
+      ttsError.classList.add('hidden');
+      generateAudio.disabled = true;
+      const originalHtml = generateAudio.innerHTML;
+      generateAudio.innerHTML = '<span>⏳</span> COCINANDO QWEN (Reintentando si falla)...';
+      try {
+        const r = await fetch('/api/generate-audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            voice: voiceSelect.value,
+            style: voiceSelect.value === 'qwen' ? styleSelect.value : null
+          })
+        });
+        const data = await r.json();
+        if (data.ok && data.audioBase64) {
+          lastGeneratedAudioPath = data.path;
+          audioPlayer.src = 'data:audio/mpeg;base64,' + data.audioBase64;
+          audioPlayer.classList.remove('hidden');
+          audioPlayer.play();
+          sendAudio.disabled = false;
+        } else {
+          ttsError.textContent = data.error || 'Error al generar';
+          ttsError.classList.remove('hidden');
+        }
+      } catch (e) {
+        ttsError.textContent = 'Error de red';
+        ttsError.classList.remove('hidden');
+      }
+      generateAudio.disabled = false;
+      generateAudio.innerHTML = originalHtml;
+    });
+
+    sendAudio.addEventListener('click', async () => {
+      if (!lastGeneratedAudioPath) return;
+      sendAudio.disabled = true;
+      try {
+        const r = await fetch('/api/send-audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ audioPath: lastGeneratedAudioPath, target: 'telegram' })
+        });
+        const data = await r.json();
+        if (data.ok) alert('✅ Audio enviado a Telegram');
+        else alert('❌ Error: ' + data.error);
+      } catch (e) { alert('Error de red'); }
+      sendAudio.disabled = false;
+    });
+
+    // --- CONFIG INICIAL ---
+    voiceSelect.addEventListener('change', () => {
+      if (voiceSelect.value === 'qwen') {
+        styleContainer.classList.remove('opacity-30', 'pointer-events-none');
+        styleContainer.style.filter = 'none';
+      } else {
+        styleContainer.classList.add('opacity-30', 'pointer-events-none');
+        styleContainer.style.filter = 'grayscale(1)';
+      }
+    });
+
+    (async () => {
+      try {
+        const [rCfg, rAuto] = await Promise.all([fetch('/api/config'), fetch('/api/auto-mode')]);
+        const dCfg = await rCfg.json();
+        const dAuto = await rAuto.json();
+        if (dCfg.fanvueLink) {
+          fanvueLink.href = dCfg.fanvueLink;
+          fanvueLink.textContent = dCfg.fanvueLink;
+          copyFanvue.disabled = false;
+          copyFanvue.onclick = () => {
+            navigator.clipboard.writeText(dCfg.fanvueLink);
+            copyFanvue.textContent = '¡Copiado!';
+            setTimeout(() => copyFanvue.textContent = 'Copiar Link', 1500);
+          };
+        }
+        setAutoModeUI(!!dAuto.autoMode);
+      } catch (e) { }
+    })();
+
+    function escapeHtml(s) {
+      const el = document.createElement('div');
+      el.textContent = s;
+      return el.innerHTML;
+    }
+  </script>
+</body>
+
+</html>

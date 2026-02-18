@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+.env
+.DS_Store
+node_modules/
+venv/
+.venv/
+dist/
+build/
+.vscode/
+
+# Ignorar archivos del navegador y sesiones pesadas
+data/
+browser_session_manager/
+instagram_bot/browser_data/
+*.log
+*.mp4
+*.mp3
+*.webm
+*.avi
+*.mov
+# Mantener solo thumbnails pequeños si es necesario
+
+# Ignorar archivos grandes temporales
+temp/
+tmp/
+*.zip
+*.rar

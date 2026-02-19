@@ -94,14 +94,10 @@ def main():
     if fanweb.exists():
         run_background("FanWeb", [py, str(fanweb)])
 
-    # 4. INSTAGRAM MONITOR (LA VENTANA PRINCIPAL)
-    insta_script = PROJECT_ROOT / "instagram_bot" / "automation" / "run_instagram_monitor.py"
-    if insta_script.exists():
-        print("\n[!] LANZANDO MONITOR DE INSTAGRAM (Ventana visible)...")
-        run_visible("Instagram Monitor", [py, str(insta_script)])
-    else:
-        print("\n[ERROR] run_instagram_monitor.py no encontrado.")
-
+    # 4. INSTAGRAM MONITOR (ELIMINADO - GESTIÓN MANUAL)
+    # insta_script = PROJECT_ROOT / "instagram_bot" / "automation" / "run_instagram_monitor.py"
+    print("\n[INFO] Instagram Bot desactivado (Gestión Manual por Socia).")
+    
     # Intentar obtener la URL de ngrok (tarda unos segundos en activarse)
     time.sleep(3)
     public_url = "Iniciando..."
@@ -119,7 +115,7 @@ def main():
 
     print("\n" + "=" * 60)
     print("  ESTADO:")
-    print("     - Instagram: TRABAJANDO (Ventana abierta)")
+    print("     - Instagram: MANUAL (Revisa el celular)")
     print("     - Dashboard Local:  http://localhost:8501")
     print(f"     - DASHBOARD PÚBLICO: {public_url}")
     print("     - WhatsApp:  Número listo para conversión")

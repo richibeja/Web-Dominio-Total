@@ -138,6 +138,37 @@ def run_streamlit():
         .big-font { font-size:2rem !important; font-weight: bold; }
         .metric-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 1.5rem; border-radius: 10px; margin: 0.5rem 0; }
         .log-box { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; max-height: 400px; overflow-y: auto; }
+        
+        /* BOTONES DE VENTAS */
+        div[data-testid="stButton"] button {
+            width: 100%;
+            border-radius: 12px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        /* Ebook - Verde Dinero */
+        div.row-widget.stButton:nth-of-type(1) button { border: 2px solid #2ecc71; color: #2ecc71; }
+        div.row-widget.stButton:nth-of-type(1) button:hover { background-color: #2ecc71; color: white; }
+        
+        /* Fanvue - Naranja Fuego */
+        div.row-widget.stButton:nth-of-type(2) button { border: 2px solid #e67e22; color: #e67e22; }
+        div.row-widget.stButton:nth-of-type(2) button:hover { background-color: #e67e22; color: white; }
+
+        /* Telegram - Azul */
+        div.row-widget.stButton:nth-of-type(3) button { border: 2px solid #3498db; color: #3498db; }
+        div.row-widget.stButton:nth-of-type(3) button:hover { background-color: #3498db; color: white; }
+
+        /* Objeción - Rojo Alerta */
+        div.row-widget.stButton:nth-of-type(4) button { border: 2px solid #e74c3c; color: #e74c3c; }
+        div.row-widget.stButton:nth-of-type(4) button:hover { background-color: #e74c3c; color: white; }
+        
+        /* Generador Principal - ROSA AURORA */
+        div.stButton > button:first-child {
+            background: linear-gradient(45deg, #ff00cc, #333399);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(255, 0, 204, 0.3);
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -161,165 +192,230 @@ def render_manual_assistant_tab():
     import streamlit as st
     import asyncio
     from ai_models.ai_handler import AIHandler
+    from config.utopia_finca_links import LINKS
     
-    st.subheader("🤖 Asistente de Ventas Manual (WhatsApp)")
-    st.markdown("""
-    La **socia** (mujer) pega aquí lo que dijo el cliente en WhatsApp. 
-    La IA genera solo **texto** persuasivo para que lo copies y envíes. Tú grabas tus propios audios si quieres; esta interfaz es solo para el **chat**.
-    """)
-    
+    st.subheader("✈️ COPILOTO DE VENTAS (Para Socia)")
+    st.markdown("---")
+
     if "manual_handler" not in st.session_state:
         st.session_state.manual_handler = AIHandler()
         
-    from shared.persistence import (
-        get_conversation_map, save_client_note, save_client_link, 
-        get_client_note, get_client_link,
-        save_client_real_name, get_client_real_name,
-        save_client_phone, get_client_phone
-    )
+    # Botón de Limpieza Rápida
+    if st.button("🧹 Limpiar Texto"):
+        # Borrar variable de estado
+        st.session_state.client_input = ""
+        st.session_state.generated_response = ""
+        # Borrar key del widget
+        if "input_box" in st.session_state:
+            st.session_state["input_box"] = ""
+        st.rerun()
+
+    if "client_input" not in st.session_state: st.session_state.client_input = ""
+    if "generated_response" not in st.session_state: st.session_state.generated_response = ""
+
+    # SECCIÓN 1: ¿QUÉ DIJO EL CLIENTE?
+    col_plat, col_lang, col_input = st.columns([1, 1, 2])
+    with col_plat:
+        platform = st.radio("Plataforma:", ["WhatsApp 💚", "Instagram 💜", "Telegram 💙", "Fanvue 🧡"], index=1)
     
-    # Selector de cliente para memoria
-    conv_map = get_conversation_map()
-    usernames = sorted(list(conv_map.keys()))
+    with col_lang:
+        manual_lang = st.radio("Idioma Cliente:", ["Español (Paisa) 🇨🇴", "Inglés (Latina) 🇺🇸", "Francés (Latina) 🇫🇷"])
+        
+    with col_input:
+        client_text = st.text_area("1. Pega aquí lo que dijo el cliente:", 
+                                  value=st.session_state.client_input,
+                                  placeholder="Ej: Hola, quiero info... o No tengo dinero...", 
+                                  height=100,
+                                  key="input_box")
     
-    with st.expander("👤 Gestión de Contactos y Memoria", expanded=True):
-        col_c, col_rn, col_w = st.columns([1, 1, 1])
-        selected_user = col_c.selectbox("Seleccionar Cliente (IG):", ["(Nuevo)"] + usernames)
+    with st.expander("🛒 Objetivo de Venta / Tips", expanded=True):
+        st.info("💡 **Tips de Venta:**\n- Ebook: Entrada ($7)\n- Telegram: Comunidad\n- Fanvue: VIP Mensual")
+        sales_objective = st.selectbox("Objetivo Ahora:", ["Vender Ebook ($7)", "Vender Fanvue", "Vender Telegram VIP", "Solo Seducción"])
+
+    # SECCIÓN 2: NIVEL DE TOXICIDAD (MÁSCARA)
+    toxicity = st.select_slider("🎭 Nivel de Toxicidad / Manipulación:", 
+                                options=["🥰 Novia Perfecta", "😈 Manipuladora (Seducción Pro)", "☠️ Tóxica Extrema (Psicología Oscura)"],
+                                value="😈 Manipuladora (Seducción Pro)")
+
+    # SECCIÓN 3: BOTONES DE ESTRATEGIA (CEREBRO DE VENTAS)
+    st.markdown("### 2. ¿Qué le respondemos?")
+    
+    col_b1, col_b2, col_b3, col_b4 = st.columns(4)
+    
+    response_type = None
+    
+    if col_b1.button("💰 Vender Ebook ($7)"):
+        response_type = "SELL_EBOOK"
+    
+    if col_b2.button("🔞 Vender Fanvue"):
+        response_type = "SELL_FANVUE"
         
-        current_rn = ""
-        current_phone = ""
-        current_note = ""
-        current_link = ""
+    if col_b3.button("💎 Vender Telegram"):
+        response_type = "SELL_TELEGRAM"
+
+    if col_b4.button("💍 Vender Novia Virtual ($300)"):
+        response_type = "SELL_GIRLFRIEND"
         
-        if selected_user != "(Nuevo)":
-            current_rn = get_client_real_name(selected_user)
-            current_phone = get_client_phone(selected_user)
-            current_note = get_client_note(selected_user)
-            current_link = get_client_link(selected_user)
+    if st.button("🛡️ Objeción: 'No Dinero'"):
+        response_type = "OBJECTION_MONEY"
+
+    if st.button("💬 Responder / Seguir Charla (Sin Venta)"):
+        response_type = "GENERAL_SEDUCTION"
+
+    # LÓGICA DE GENERACIÓN
+    if response_type and client_text:
+        with st.spinner(f"Cocinando respuesta tipo {response_type}..."):
             
-        real_name = col_rn.text_input("Nombre Real:", value=current_rn, placeholder="Ej: Juan Pérez")
-        whatsapp_phone = col_w.text_input("Número WhatsApp:", value=current_phone, placeholder="Ej: +57...")
-        
-        col_n, col_l, col_s = st.columns([2, 2, 0.5])
-        new_note = col_n.text_input("Notas Psicológicas/Detalles:", value=current_note, placeholder="Ej: Está solo, le gusta que lo traten dulce...")
-        new_link = col_l.text_input("Link de Venta Personalizado:", value=current_link, placeholder="Ej: Fanvue Promo Link...")
-        
-        if col_s.button("💾 Guardar"):
-            if selected_user != "(Nuevo)":
-                save_client_real_name(selected_user, real_name)
-                save_client_phone(selected_user, whatsapp_phone)
-                save_client_note(selected_user, new_note)
-                save_client_link(selected_user, new_link)
-                st.success(f"Contacto de @{selected_user} actualizado.")
-                st.rerun()
-            else:
-                st.warning("Selecciona un cliente de la lista.")
+            # CONSTRUCCIÓN DE LA PERSONALIDAD SEGÚN NIVEL
+            personality_prompt = ""
+            if "Novia Perfecta" in toxicity:
+                personality_prompt = """
+                MODO: NOVIA PERFECTA 🥰
+                - Sé dulce, sumisa, cariñosa y complaciente.
+                - Hazlo sentir el hombre más fuerte y amado.
+                - Usa emojis de corazones, besos y caritas felices.
+                """
+            elif "Manipuladora" in toxicity:
+                personality_prompt = """
+                MODO: MANIPULADORA (ROBERT GREENE) 😈
+                - Aplica la Ley 16 (Ausencia) y Arquetipo Sirena.
+                - Sé un reto. No se lo des fácil.
+                - Hazte la difícil pero deseable.
+                - Insinúa que tienes otros pretendientes (Triangulación suave).
+                """
+            else: # Tóxica Extrema
+                personality_prompt = """
+                MODO: TÓXICA EXTREMA ☠️
+                - Usa la CULPA y el DRAMA. ("No me valoras", "Siempre haces lo mismo").
+                - Hazte la víctima. Llora (virtualmente).
+                - Sé celosa, posesiva y un poco agresiva-pasiva.
+                - Haz que él te pida perdón aunque no haya hecho nada.
+                """
 
-    # Ver historial
-    if selected_user != "(Nuevo)":
-        with st.expander("📜 Historial Reciente de la Conversación"):
-            history = st.session_state.manual_handler._get_conversation_history(selected_user)
-            for msg in history:
-                role = "Tu Novia" if msg["role"] == "assistant" else "Cliente"
-                st.markdown(f"**{role}:** {msg['content']}")
-
-    # Input del cliente (para responder a lo que dijo) — Solo chat; la socia graba sus propios audios
-    st.markdown("---")
-    col_in, col_tac = st.columns([2, 1])
-    cliente_msg = col_in.text_area("1. ¿Qué dijo el cliente? (Opcional):", placeholder="Pega aquí el mensaje de WhatsApp...", height=100)
-    
-    tactics = [
-        "Normal (Paisa Dulce)",
-        "Sirena (Seducción)",
-        "Cansada/Dramática (Urgencia)",
-        "Misteriosa (Ley 4 - Hablar poco)",
-        "Celosa/Triangulación (Ley 11)",
-        "Protector (Hacerlo sentir su salvador)"
-    ]
-    selected_tactic = col_tac.selectbox("Táctica / Mood:", tactics)
-
-    # Borrador propio (para humanizar)
-    borrador_msg = st.text_area("2. ¿Qué quieres decirle tú? (Borrador):", placeholder="Ej: dile que estoy ocupada pero que lo quiero ver luego...", height=80)
-    
-    col_btn_gen, col_btn_hum, col_img = st.columns([1, 1, 1])
-    
-    # Respuesta Magica (basada en el cliente)
-    if col_btn_gen.button("✨ Generar Respuesta") and (cliente_msg or borrador_msg):
-        with st.spinner("Cocinando respuesta..."):
-            try:
-                # Inyectar táctica en el contexto
-                context_plus = f"[TÁCTICA REQUERIDA: {selected_tactic}]"
-                if borrador_msg:
-                    context_plus += f"\n[IDEA DEL USUARIO: {borrador_msg}]"
+            # ---------------------------------------------------------
+            
+            # ---------------------------------------------------------
+            # LÓGICA DEL EMBUDO (FUNNEL) SEGÚN PLATAFORMA
+            # ---------------------------------------------------------
+            
+            # 1. INSTAGRAM (Objetivo: Mover a WhatsApp)
+            if "Instagram" in platform:
+                wa_link = LINKS.get('whatsapp')
+                links_context = f"USA SOLO ESTE LINK: {wa_link} (O diles el número +57 322 719 8007)."
                 
-                async def get_res():
-                    return await st.session_state.manual_handler.get_response_with_voice(
-                        cliente_msg if cliente_msg else "hola mor", 
-                        user_id=selected_user if selected_user != "(Nuevo)" else "manual_sales", 
-                        dialect="paisa",
-                        context=context_plus,
-                        voice_style=None,
-                        text_only=True
+                # SELECCIÓN ALEATORIA DE EXCUSAS (Para no sonar robot)
+                import random
+                excusas = [
+                    "EXCUSA: 'Ay bebé, Instagram está súper cansón hoy y me borra mensajes. Escríbeme al WhatsApp mejor'.",
+                    "EXCUSA: 'Mor, por acá no puedo mandarte lo que quiero... me da miedo que me bloqueen 🥺. Hablemos por WhatsApp'.",
+                    "EXCUSA: 'Shhh... 🤫 Papi, aquí nos vigilan. Vámonos a lo privado en WhatsApp'.",
+                    "EXCUSA: 'Cielo, si quieres ver más de mí, aquí no se puede. Te espero en mi WhatsApp personal'.",
+                    "EXCUSA: 'Ay no, qué pereza este chat de Instagram, se traba mucho. Escríbeme al WhatsApp +57...'."
+                ]
+                excusa_elegida = random.choice(excusas)
+
+                if response_type == "GENERAL_SEDUCTION":
+                    # DETECCION DE DESPEDIDA / POSPONER
+                    despedida_keywords = ["mañana", "trabajar", "dormir", "luego", "noche", "descansa", "ocupado", "voy a"]
+                    es_despedida = any(k in client_text.lower() for k in despedida_keywords)
+                    
+                    if es_despedida:
+                        instruction = "EL CLIENTE SE VA O POSPONE. NO VENDAS. Sé la novia perfecta: Deséale suerte, dile que lo extrañarás o que sueñe contigo. Cierra la charla con amor para que vuelva. (0 LINKS)."
+                    else:
+                        instruction = f"CHARLA CORTA. Coquetea rápido ('jajaja', 'mor'). {excusa_elegida} Pide que te escriban."
+                else:
+                    # Si intenta vender algo en IG, la IA lo corrige:
+                    instruction = f"NO VENDAS AQUÍ (PELIGRO BLOQUEO). Dile: '{excusa_elegida}'. Manda el link de WhatsApp."
+
+            # 2. WHATSAPP (Objetivo: Mover a Telegram)
+            elif "WhatsApp" in platform:
+                tg_link = LINKS.get('telegram')
+                links_context = f"USA PREFERENTEMENTE ESTE LINK (Comunidad): {tg_link}"
+                
+                if response_type == "SELL_TELEGRAM":
+                    instruction = "Invítalo a la Comunidad de Telegram. Dile que ahí subes lo que no puedes mostrar en fotos."
+                elif response_type == "SELL_GIRLFRIEND":
+                    instruction = "Vende el SERVICIO DE NOVIA VIRTUAL ($300 USD/mes). Dile: 'Mor, imagina despertar con mi voz todos los días, fotos exclusivas solo para ti y chat priority. Sé tu dueña. Solo me quedan 2 cupos'. (Usa Fanvue para cobrar)."
+                elif response_type == "SELL_EBOOK" or response_type == "SELL_FANVUE":
+                    # En WA sí se puede vender si el cliente ya está listo, pero mejor Telegram
+                    links_context += f"\nTAMBIÉN PUEDES USAR: Ebook={LINKS.get('ebook_payment')} | Fanvue={LINKS.get('fanvue')}"
+                    instruction = "El cliente quiere comprar YA. Pásale el link directo, pero invítalo también a Telegram después."
+                else:
+                    instruction = "Charla íntima de novia. Manda audios (texto sugerido). Si la charla muere, invítalo a Telegram."
+
+            # 3. TELEGRAM / FANVUE (Objetivo: VENDER A SACO)
+            else:
+                links_context = f"""
+                LINKS DE COMUNIDAD Y VENTA:
+                - Ebook ($7): {LINKS.get('ebook_payment')}
+                - Fanvue (Pack): {LINKS.get('fanvue')}
+                """
+                if response_type == "GENERAL_SEDUCTION":
+                    instruction = "Mantén la temperatura alta. Eres la dueña del lugar. Seduce."
+                else:
+                    instruction = "CIERRA LA VENTA. Sin miedo. Pide el dinero o el clic. Dile que se está perdiendo lo mejor."
+
+            # ---------------------------------------------------------
+
+            # DETECCIÓN DE IDIOMA MANUAL (Por Botones)
+            persona_instruction = ""
+            if "Inglés" in manual_lang:
+                persona_instruction = "🛑 IDIOMA: INGLÉS 🇺🇸. Responde en INGLÉS ESTILO LATINA ('Baby', 'Papi', 'My love'). NO HABLES ESPAÑOL."
+            elif "Francés" in manual_lang:
+                persona_instruction = "🛑 IDIOMA: FRANCÉS 🇫🇷. Responde en FRANCÉS ESTILO LATINA ('Chéri', 'Mon amour'). NO HABLES ESPAÑOL."
+            else:
+                persona_instruction = "IDIOMA: Español Colombiano (Paisa). Usa: 'Mor', 'Bebé', 'Cielo', 'Mi Rey'."
+
+            full_prompt = f"""
+            ACTÚA COMO: Luz de Aurora (Tu Novia Paisa Caliente).
+            PLATAFORMA: {platform}
+            
+            {personality_prompt}
+            
+            {persona_instruction}
+            
+            OBJETIVO ACTUAL: {instruction}
+            
+            HISTORIAL / MENSAJE DEL CLIENTE: 
+            "{client_text}"
+            CONTEXTO LINKS:
+            {links_context}
+            
+            Genera 1 respuesta (TEXTO PURO) corta y natural.
+            """
+            
+            try:
+                # LLAMADA A LA IA (MODO TURBO: SIN VOZ)
+                async def generate():
+                    # Usamos process_direct_text_only para evitar cargar TTS
+                    return await st.session_state.manual_handler.process_direct_text_only(
+                        full_prompt
                     )
                 
-                result = asyncio.run(get_res())
-                st.session_state.last_manual_res = result
+                result_text = asyncio.run(generate())
+                
+                # FILTRO DE SEGURIDAD FINAL: Si es Instagram, BORRAR cualquier link que no sea WhatsApp
+                if "Instagram" in platform:
+                    bad_link = "web-dominio-total.vercel.app"
+                    if bad_link in result_text:
+                        result_text = result_text.replace("Mi contenido exclusivo está solo aquí bebé: https://" + bad_link + " 💕", "")
+                        result_text = result_text.replace("https://" + bad_link, "")
+                
+                st.session_state.generated_response = result_text
             except Exception as e:
-                st.error(f"Error: {e}")
+                st.error(f"Error AI: {e}")
 
-    # Humanizar (solo el borrador)
-    if col_btn_hum.button("🎭 Paisa-ify (Humanizar)") and borrador_msg:
-        with st.spinner("Humanizando..."):
-            try:
-                prompt_hum = f"Reescribe este borrador para que suene como una chica Paisa real (Medellín), coqueta, en minúsculas y muy natural. Borrador: '{borrador_msg}'"
-                async def hum_res():
-                    return await st.session_state.manual_handler.get_response_with_voice(
-                        prompt_hum, 
-                        user_id="manual_humanize", 
-                        dialect="paisa",
-                        context="[INSTRUCCIÓN: SOLO REESCRIBE EL TEXTO, NO AÑADAS COMENTARIOS]",
-                        text_only=True
-                    )
-                result = asyncio.run(hum_res())
-                st.session_state.last_manual_res = result
-            except Exception as e:
-                st.error(f"Error: {e}")
-
-    # Indicar qué versión del "Modo Dios"
-    if cliente_msg or borrador_msg:
-        mode_label = "🔥 Paisa (Medellín)" 
-        st.info(f"📍 **Modo:** {mode_label} | **Táctica:** {selected_tactic}")
-
-    # Generar Foto (Para prueba de vida / consistencia)
-    if col_img.button("📸 Generar Foto Consistente"):
-        with st.spinner("Generando foto de la modelo..."):
-            photo_path = st.session_state.manual_handler.generate_consistent_image()
-            if photo_path:
-                st.session_state.last_photo = photo_path
-            else:
-                st.error("No se pudo generar la imagen (revisa HF_API_TOKEN).")
-
-    # Mostrar Resultados de Respuesta (solo texto; la socia graba sus propios audios)
-    if "last_manual_res" in st.session_state:
-        res = st.session_state.last_manual_res
-        st.success("✅ Respuesta generada (copia y envía por WhatsApp):")
+    # SECCIÓN 3: RESULTADO
+    if st.session_state.generated_response:
+        st.markdown("### ✅ Copia esto y pégalo:")
+        st.code(st.session_state.generated_response, language="text")
         
-        # Link de venta si existe
-        venta_link = get_client_link(selected_user) if selected_user != "(Nuevo)" else ""
-        if venta_link:
-            st.info(f"🔗 **Link de Venta para este cliente:** {venta_link}")
-            
-        # Solo texto copiable (no se muestra audio; la socia usa su propia voz)
-        st.text_area("Copia este texto:", value=res["text"], height=120)
-
-    # Mostrar Foto si se generó
-    if "last_photo" in st.session_state:
-        photo_path = Path(st.session_state.last_photo)
-        if photo_path.exists():
-            st.markdown("### 📸 Foto Generada (Consistencia Visual)")
-            photo_bytes = photo_path.read_bytes()
-            st.image(photo_bytes, caption="Usa esta foto como 'prueba de vida' o contenido exclusivo.")
-            st.download_button("⬇️ Descargar esta Foto", photo_bytes, file_name="vida_modelo.jpg")
+        # Botones extra para links rápidos
+        st.caption("Links Rápidos (por si la IA no los puso):")
+        c1, c2, c3 = st.columns(3)
+        c1.code(LINKS.get('ebook_payment'), language="text")
+        c2.code(LINKS.get('fanvue'), language="text")
+        c3.code(LINKS.get('telegram'), language="text")
 
     st.divider()
 

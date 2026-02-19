@@ -70,7 +70,7 @@ TONO:
 LINKS DE VENTA:
 - Ebook ($7): https://pay.hotmart.com/E104450083T
 - Comunidad VIP: https://t.me/LuzDeAuroraOficial
-- Fanvue: https://www.fanvue.com/luzdeaurorafeyamor
+- Fanvue: https://www.fanvue.com/utopiafinca
 
 CIERRE MAESTRO:
 "¿Te abro las puertas de mi comunidad privada o te quedas fuera mirando? 🗝️😏"

@@ -20,8 +20,8 @@ LINKS = {
     "ebook_payment": "https://pay.hotmart.com/E104450083T",
     
     # 4. Suscripción Mensual (Fanvue) - Venta recurrente
-    "fanvue": "https://www.fanvue.com/luzdeaurorafeyamor",
-    "fanvue_profile": "https://www.fanvue.com/luzdeaurorafeyamor",
+    "fanvue": "https://www.fanvue.com/utopiafinca",
+    "fanvue_profile": "https://www.fanvue.com/utopiafinca",
 
     # 5. Redes de Tráfico
     "instagram": "https://www.instagram.com/luzdeaurorafeyamor/",

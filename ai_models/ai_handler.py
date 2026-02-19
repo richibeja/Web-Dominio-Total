@@ -382,6 +382,24 @@ Tono: Cálido, neutral, natural, minúsculas. Una respuesta corta lista para cop
             # Si 404, continuar con siguiente modelo; si otro error, reintentar ya hecho
         return None
 
+    async def process_direct_text_only(self, user_input, user_id="user", dialect="paisa"):
+        """Método TURBO para Dashboard (Sin cargar TTS ni nada de voz)."""
+        prompt = user_input
+        history = self._get_conversation_history(user_id)
+        
+        # Generar respuesta usando el método público existente
+        response_text = await self.get_response(
+            prompt, 
+            user_id=user_id, 
+            dialect=dialect, 
+            message_type="sales"
+        )
+        
+        # Guardar en historial
+        self._add_to_memory(user_id, prompt, response_text)
+        
+        return response_text
+
     async def get_response_with_voice(self, user_message: str, user_id: Optional[str] = None, dialect: str = "paisa", context: Optional[str] = None, voice_style: Optional[str] = None, text_only: bool = False) -> Dict:
         """
         Genera texto y opcionalmente audio. Si text_only=True (socia en Dashboard), solo devuelve texto.

@@ -352,7 +352,42 @@ Reglas OBLIGATORIAS:
 - Máx 2 emojis por mensaje.`;
   }
 
-  // Modelos de respaldo — si uno falla (429/400), prueba el siguiente
+  // ── PRIORIDAD 1: Google Gemini (1.500/día gratis, sin tarjeta) ──────────────
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (geminiKey) {
+    try {
+      const geminiRes = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + geminiKey },
+          body: JSON.stringify({
+            model: 'gemini-2.0-flash',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }
+            ],
+            max_tokens: 200,
+            temperature: 0.85
+          })
+        }
+      );
+      if (geminiRes.ok) {
+        const gData = await geminiRes.json();
+        const reply = gData?.choices?.[0]?.message?.content?.trim();
+        if (reply) {
+          console.log('[generate-reply] ✅ Respondió Gemini 2.0 Flash');
+          return res.json({ ok: true, reply });
+        }
+      } else {
+        console.warn('[generate-reply] Gemini falló:', geminiRes.status);
+      }
+    } catch (e) {
+      console.warn('[generate-reply] Gemini excepción:', e.message);
+    }
+  }
+
+  // ── PRIORIDAD 2: OpenRouter modelos gratuitos (respaldo) ────────────────────
   const MODELOS = [
     process.env.AI_MODEL_NAME || 'google/gemini-2.0-flash-exp:free',
     'mistralai/mistral-small-3.1-24b-instruct:free',
@@ -360,7 +395,6 @@ Reglas OBLIGATORIAS:
     'microsoft/phi-3-mini-128k-instruct:free'
   ];
 
-  let lastError = null;
   for (const modelId of MODELOS) {
     try {
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -383,30 +417,23 @@ Reglas OBLIGATORIAS:
       });
 
       if (!response.ok) {
-        const errText = await response.text();
-        console.warn(`[generate-reply] Modelo ${modelId} falló (${response.status}). Probando siguiente...`);
-        lastError = `Error ${response.status} en ${modelId}`;
-        continue; // Probar siguiente modelo
+        console.warn(`[generate-reply] ${modelId} falló (${response.status}). Probando siguiente...`);
+        continue;
       }
 
       const data = await response.json();
       const reply = data?.choices?.[0]?.message?.content?.trim();
-      if (!reply) {
-        lastError = `Sin respuesta de ${modelId}`;
-        continue;
-      }
+      if (!reply) continue;
 
       console.log(`[generate-reply] ✅ Respondió con modelo: ${modelId}`);
       return res.json({ ok: true, reply });
 
     } catch (err) {
       console.warn(`[generate-reply] Excepción con ${modelId}:`, err.message);
-      lastError = err.message;
     }
   }
 
-  // Si todos los modelos fallaron
-  res.status(500).json({ ok: false, error: 'Todos los modelos de IA están ocupados. Intenta en 1 minuto.' });
+  res.status(500).json({ ok: false, error: 'IA ocupada. Intenta en 1 minuto.' });
 });
 
 // API: generar audio con edge-tts (Python). Colombia = Medellín; USA/UK = Baddie / British Babe

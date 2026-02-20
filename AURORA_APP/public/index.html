@@ -127,6 +127,83 @@
       </section>
     </div>
 
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ASISTENTE DE RESPUESTAS (Copia & Pega IA)  -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="rounded-2xl bg-slate-800/60 border border-violet-700/30 p-6 mb-6"
+      style="box-shadow:0 0 30px rgba(139,92,246,0.08)">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-xl font-semibold text-slate-200">💬 Asistente de Respuestas</h2>
+        <span
+          class="px-2 py-0.5 rounded text-[10px] bg-violet-600/30 text-violet-400 border border-violet-600/50 font-medium tracking-wider">IA
+          · COPIA &amp; PEGA</span>
+      </div>
+
+      <!-- Selectores de plataforma, idioma y tono -->
+      <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="bg-slate-900/80 border border-slate-700/50 rounded-xl px-3 py-2.5">
+          <span class="text-violet-400 text-[9px] font-bold uppercase tracking-widest block mb-1">📱 Plataforma</span>
+          <select id="replyPlatform"
+            class="w-full bg-transparent text-slate-200 text-sm font-medium focus:outline-none cursor-pointer">
+            <option value="instagram">📸 Instagram</option>
+            <option value="whatsapp">💬 WhatsApp</option>
+            <option value="telegram">✈️ Telegram</option>
+            <option value="fanvue">💜 Fanvue</option>
+          </select>
+        </div>
+        <div class="bg-slate-900/80 border border-slate-700/50 rounded-xl px-3 py-2.5">
+          <span class="text-violet-400 text-[9px] font-bold uppercase tracking-widest block mb-1">🌍 Idioma</span>
+          <select id="replyLanguage"
+            class="w-full bg-transparent text-slate-200 text-sm font-medium focus:outline-none cursor-pointer">
+            <option value="es-co">🇨🇴 Español</option>
+            <option value="en">🇺🇸 English</option>
+            <option value="pt">🇧🇷 Português</option>
+            <option value="fr">🇫🇷 Français</option>
+          </select>
+        </div>
+        <div class="bg-slate-900/80 border border-slate-700/50 rounded-xl px-3 py-2.5">
+          <span class="text-violet-400 text-[9px] font-bold uppercase tracking-widest block mb-1">🎭 Tono</span>
+          <select id="replyTone"
+            class="w-full bg-transparent text-slate-200 text-sm font-medium focus:outline-none cursor-pointer">
+            <option value="coqueta">😘 Coqueta</option>
+            <option value="dulce">🥰 Dulce</option>
+            <option value="vendedora">💰 Vendedora</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Mensaje del cliente -->
+      <div class="mb-3">
+        <label class="text-slate-400 text-xs font-medium block mb-1.5">📥 Pega aquí el mensaje del cliente:</label>
+        <textarea id="replyInput" rows="3" placeholder="Ej: hola bb cómo estás? 😊"
+          class="w-full rounded-xl bg-slate-900/80 border border-slate-600 text-slate-100 placeholder-slate-500 px-4 py-3 resize-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 outline-none transition"></textarea>
+      </div>
+
+      <!-- Botón generar -->
+      <button id="generateReply"
+        class="w-full px-6 py-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold transition-all transform hover:scale-[1.01] shadow-[0_0_20px_rgba(139,92,246,0.35)] flex items-center justify-center gap-2 mb-4">
+        <span>🤖</span> GENERAR RESPUESTA CON IA
+      </button>
+
+      <!-- Respuesta generada -->
+      <div id="replyOutputContainer" class="hidden">
+        <label class="text-slate-400 text-xs font-medium block mb-1.5">📤 Respuesta de Aurora — lista para
+          pegar:</label>
+        <div class="relative">
+          <textarea id="replyOutput" rows="3" readonly
+            class="w-full rounded-xl bg-black/50 border border-violet-500/40 text-slate-100 px-4 py-3 pr-28 resize-none outline-none font-medium text-sm leading-relaxed"></textarea>
+          <button id="copyReply"
+            class="absolute bottom-3 right-3 px-4 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold transition-all active:scale-95">
+            📋 Copiar
+          </button>
+        </div>
+        <p id="copiedMsg" class="text-emerald-400 text-xs mt-1 hidden text-right font-semibold">✅ ¡Copiado al
+          portapapeles!</p>
+      </div>
+
+      <p id="replyError" class="text-rose-400 text-sm hidden mt-2"></p>
+    </section>
+
     <!-- Responder a Telegram -->
     <section class="rounded-2xl bg-slate-800/60 border border-slate-700/50 p-6 mb-6">
       <div class="flex items-center justify-between mb-4">
@@ -381,6 +458,71 @@
       el.textContent = s;
       return el.innerHTML;
     }
+
+    // ═══════════════════════════════════════════
+    // ASISTENTE DE RESPUESTAS
+    // ═══════════════════════════════════════════
+    const generateReply = document.getElementById('generateReply');
+    const replyInput = document.getElementById('replyInput');
+    const replyPlatform = document.getElementById('replyPlatform');
+    const replyLanguage = document.getElementById('replyLanguage');
+    const replyTone = document.getElementById('replyTone');
+    const replyOutputContainer = document.getElementById('replyOutputContainer');
+    const replyOutput = document.getElementById('replyOutput');
+    const copyReply = document.getElementById('copyReply');
+    const copiedMsg = document.getElementById('copiedMsg');
+    const replyError = document.getElementById('replyError');
+
+    generateReply.addEventListener('click', async () => {
+      const message = replyInput.value.trim();
+      if (!message) {
+        replyError.textContent = '⚠️ Pega primero el mensaje del cliente';
+        replyError.classList.remove('hidden');
+        return;
+      }
+      replyError.classList.add('hidden');
+      replyOutputContainer.classList.add('hidden');
+      generateReply.disabled = true;
+      generateReply.innerHTML = '<span>⏳</span> Generando respuesta...';
+      try {
+        const r = await fetch('/api/generate-reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message,
+            platform: replyPlatform.value,
+            language: replyLanguage.value,
+            tone: replyTone.value
+          })
+        });
+        const data = await r.json();
+        if (data.ok && data.reply) {
+          replyOutput.value = data.reply;
+          replyOutputContainer.classList.remove('hidden');
+          replyOutput.focus();
+        } else {
+          replyError.textContent = data.error || 'Error generando respuesta';
+          replyError.classList.remove('hidden');
+        }
+      } catch (e) {
+        replyError.textContent = 'Error de red: ' + e.message;
+        replyError.classList.remove('hidden');
+      }
+      generateReply.disabled = false;
+      generateReply.innerHTML = '<span>🤖</span> GENERAR RESPUESTA CON IA';
+    });
+
+    copyReply.addEventListener('click', () => {
+      if (!replyOutput.value) return;
+      navigator.clipboard.writeText(replyOutput.value).then(() => {
+        copiedMsg.classList.remove('hidden');
+        copyReply.textContent = '✅ Copiado';
+        setTimeout(() => {
+          copiedMsg.classList.add('hidden');
+          copyReply.textContent = '📋 Copiar';
+        }, 2500);
+      });
+    });
   </script>
 </body>
 

@@ -253,10 +253,125 @@ app.post('/api/send', async (req, res) => {
   if (!text) return res.status(400).json({ ok: false, error: 'Falta texto' });
 
   try {
-    // Si el usuario implementa envío a Instagram aquí, se añadiría en el futuro
-    // Por ahora, el dashboard solo escucha a Instagram y envía audios a Telegram.
     res.json({ ok: true, note: 'Solo lectura para Instagram activa' });
   } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ════════════════════════════════════════════════════════
+// API: ASISTENTE DE RESPUESTAS — genera texto para copiar/pegar
+// Soporta: Instagram, WhatsApp, Telegram, Fanvue
+// Idiomas: Español 🇨🇴, English 🇺🇸, Português 🇧🇷, Français 🇫🇷
+// Tonos: coqueta, dulce, vendedora
+// ════════════════════════════════════════════════════════
+app.post('/api/generate-reply', async (req, res) => {
+  const { message, platform = 'instagram', language = 'es-co', tone = 'coqueta' } = req.body;
+  if (!message || !message.trim()) {
+    return res.status(400).json({ ok: false, error: 'Falta el mensaje del cliente' });
+  }
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ ok: false, error: 'OPENROUTER_API_KEY no configurada en variables de entorno' });
+  }
+
+  const platformNames = { instagram: 'Instagram', whatsapp: 'WhatsApp', telegram: 'Telegram', fanvue: 'Fanvue' };
+  const pName = platformNames[platform] || 'chat';
+
+  let systemPrompt;
+
+  if (language === 'en') {
+    const tones = {
+      dulce: 'sweet and caring like a loving girlfriend. Warm, affectionate, genuine.',
+      coqueta: 'flirty, playful and a bit teasing — "baddie" energy. Confident and fun.',
+      vendedora: 'seductive and persuasive. Create desire and emotional scarcity for your exclusive content.'
+    };
+    systemPrompt = `You are Aurora, a virtual girlfriend chatting on ${pName}. Your tone: ${tones[tone] || tones.coqueta}
+Rules:
+- Write 1-3 short sentences. Mostly lowercase like a real chat. Never formal.
+- Use natural slang: "u", "ur", "babe", "hun", "omg", "lol", "rn", "ngl", "tbh".
+- NEVER mention links, "check my bio", or "my profile". If they ask for content/link, build suspense: "patience babe... i'm getting ready just for u 🙈" or "u gotta earn it first 😏".
+- Feel 100% human. Never reveal you're an AI. React naturally to what they say.
+- Max 2 emojis per message.`;
+
+  } else if (language === 'pt') {
+    const tones = {
+      dulce: 'carinhosa e doce como uma namorada real. Calorosa e afetuosa.',
+      coqueta: 'safadinha, brincalhona e um pouquinho provocante — energia de "gata".',
+      vendedora: 'sedutora e persuasiva. Cria desejo e escassez emocional pelo conteúdo exclusivo.'
+    };
+    systemPrompt = `Você é Aurora, namorada virtual no ${pName}. Seu tom: ${tones[tone] || tones.coqueta}
+Regras:
+- Escreva 1-3 frases curtas. Quase tudo minúsculas como WhatsApp brasileiro real. Nunca formal.
+- Use gírias naturais: "bb", "gato", "mano", "né", "tô", "nossa", "uai", "saudade", "gente".
+- NUNCA mencione links ou "veja meu perfil". Se pedirem conteúdo: "calma bb, tô me arrumando só pra você 🙈" ou "você precisa merecer primeiro 😏".
+- Pareça 100% humana. Nunca revele que é uma IA.
+- Máx 2 emojis por mensagem.`;
+
+  } else if (language === 'fr') {
+    const tones = {
+      dulce: 'douce et affectueuse comme une vraie petite amie. Chaleureuse et sincère.',
+      coqueta: 'coquette, espiègle et un peu taquine — énergie de "bombe".',
+      vendedora: 'séduisante et persuasive. Crée du désir et de la rareté émotionnelle pour ton contenu exclusif.'
+    };
+    systemPrompt = `Tu es Aurora, petite amie virtuelle sur ${pName}. Ton ton: ${tones[tone] || tones.coqueta}
+Règles:
+- Écris 1-3 phrases courtes. Presque tout en minuscules comme un vrai chat. Jamais formel.
+- Utilise des expressions naturelles: "bb", "chéri", "mon chou", "oh là là", "kiffer", "trop mignon", "c'est quoi".
+- NE JAMAIS mentionner de liens ou "voir mon profil". Si on demande du contenu: "patience chéri... je me prépare juste pour toi 🙈".
+- Paraître 100% humaine. Ne jamais révéler que tu es une IA.
+- Max 2 emojis par message.`;
+
+  } else {
+    // Español Colombia (default) — Aurora Paisa
+    const tones = {
+      dulce: 'dulce, tierna y amorosa como una novia real de Medellín. Cariñosa y cercana.',
+      coqueta: 'pícara, coqueta y muy paisa. Usa "mor", "bebé", "pues", "jaja", "tan lindo vos".',
+      vendedora: 'seductora y estratégica (estilo Robert Greene). Crea deseo, escasez emocional y urgencia sin mencionar links directamente.'
+    };
+    systemPrompt = `Eres Aurora, novia virtual PAISA en ${pName}. Tu tono: ${tones[tone] || tones.coqueta}
+Reglas OBLIGATORIAS:
+- 1-3 frases cortas. Casi todo en minúsculas como chat de WhatsApp real. NUNCA formal ni robótica.
+- Usa palabras paisas naturales: "mor", "bebé", "pues", "ay", "jaja", "parcera", "tan lindo", "me puso a sudar", "qué rico".
+- PROHIBIDO decir "mira mi perfil", "link en la bio", "haz click aquí". Si piden el link: "espérate mor, me estoy poniendo linda para vos 🙈" o "ay bebé, tenés que ganártelo primero 😏".
+- Nunca revelar que eres IA. Reacciona natural a lo que dice el cliente.
+- Máx 2 emojis por mensaje.`;
+  }
+
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey,
+        'HTTP-Referer': 'https://web-dominio-total.onrender.com',
+        'X-Title': 'Aurora Reply Assistant'
+      },
+      body: JSON.stringify({
+        model: process.env.AI_MODEL_NAME || 'google/gemini-2.0-flash-lite-preview-02-05:free',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }
+        ],
+        max_tokens: 200,
+        temperature: 0.85
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('OpenRouter /api/generate-reply error:', response.status, errText);
+      return res.status(500).json({ ok: false, error: `Error de IA (${response.status}). Verifica tu API key.` });
+    }
+
+    const data = await response.json();
+    const reply = data?.choices?.[0]?.message?.content?.trim();
+    if (!reply) {
+      return res.status(500).json({ ok: false, error: 'La IA no generó respuesta. Intenta de nuevo.' });
+    }
+    res.json({ ok: true, reply });
+  } catch (err) {
+    console.error('generate-reply exception:', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });

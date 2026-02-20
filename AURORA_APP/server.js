@@ -356,35 +356,39 @@ Reglas OBLIGATORIAS:
   // ── PRIORIDAD 1: Google Gemini (1.500/día gratis, sin tarjeta) ──────────────
   const geminiKey = process.env.GEMINI_API_KEY;
   if (geminiKey) {
-    try {
-      const geminiRes = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + geminiKey },
-          body: JSON.stringify({
-            model: 'gemini-2.0-flash',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }
-            ],
-            max_tokens: 200,
-            temperature: 0.85
-          })
+    const GEMINI_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+    for (const gModel of GEMINI_MODELS) {
+      try {
+        const geminiRes = await fetch(
+          'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + geminiKey },
+            body: JSON.stringify({
+              model: gModel,
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }
+              ],
+              max_tokens: 200,
+              temperature: 0.85
+            })
+          }
+        );
+        if (geminiRes.ok) {
+          const gData = await geminiRes.json();
+          const reply = gData?.choices?.[0]?.message?.content?.trim();
+          if (reply) {
+            console.log(`[generate-reply] ✅ Respondió ${gModel}`);
+            return res.json({ ok: true, reply });
+          }
+        } else {
+          const errBody = await geminiRes.text();
+          console.warn(`[generate-reply] Gemini ${gModel} falló (${geminiRes.status}):`, errBody.slice(0, 200));
         }
-      );
-      if (geminiRes.ok) {
-        const gData = await geminiRes.json();
-        const reply = gData?.choices?.[0]?.message?.content?.trim();
-        if (reply) {
-          console.log('[generate-reply] ✅ Respondió Gemini 2.0 Flash');
-          return res.json({ ok: true, reply });
-        }
-      } else {
-        console.warn('[generate-reply] Gemini falló:', geminiRes.status);
+      } catch (e) {
+        console.warn(`[generate-reply] Gemini ${gModel} excepción:`, e.message);
       }
-    } catch (e) {
-      console.warn('[generate-reply] Gemini excepción:', e.message);
     }
   }
 

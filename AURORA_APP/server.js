@@ -271,8 +271,9 @@ app.post('/api/generate-reply', async (req, res) => {
     return res.status(400).json({ ok: false, error: 'Falta el mensaje del cliente' });
   }
   const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ ok: false, error: 'OPENROUTER_API_KEY no configurada en variables de entorno' });
+  const geminiKeyCheck = process.env.GEMINI_API_KEY;
+  if (!apiKey && !geminiKeyCheck) {
+    return res.status(500).json({ ok: false, error: 'No hay API key de IA configurada. Agrega GEMINI_API_KEY en Render.' });
   }
 
   const platformNames = { instagram: 'Instagram', whatsapp: 'WhatsApp', telegram: 'Telegram', fanvue: 'Fanvue' };

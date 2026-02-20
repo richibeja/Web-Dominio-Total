@@ -280,18 +280,10 @@
     const embudoList = document.getElementById('embudoList');
     const fanvueLink = document.getElementById('fanvueLink');
     const copyFanvue = document.getElementById('copyFanvue');
-    const ttsText = document.getElementById('ttsText');
-    const voiceSelect = document.getElementById('voiceSelect');
-    const styleSelect = document.getElementById('styleSelect');
-    const styleContainer = document.getElementById('styleContainer');
-    const generateAudio = document.getElementById('generateAudio');
-    const sendAudio = document.getElementById('sendAudio');
-    const audioPlayer = document.getElementById('audioPlayer');
-    const ttsError = document.getElementById('ttsError');
     const logMonitor = document.getElementById('logMonitor');
 
-    let lastGeneratedAudioPath = null;
     let autoMode = false;
+
 
     // --- VISOR DE LOGS ---
     function appendLog(text) {
@@ -371,58 +363,6 @@
       });
     });
 
-    // --- TTS Y AUDIO ---
-    generateAudio.addEventListener('click', async () => {
-      const text = ttsText.value.trim();
-      if (!text) return;
-      ttsError.classList.add('hidden');
-      generateAudio.disabled = true;
-      const originalHtml = generateAudio.innerHTML;
-      generateAudio.innerHTML = '<span>⏳</span> COCINANDO QWEN (Reintentando si falla)...';
-      try {
-        const r = await fetch('/api/generate-audio', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text,
-            voice: voiceSelect.value,
-            style: voiceSelect.value === 'qwen' ? styleSelect.value : null
-          })
-        });
-        const data = await r.json();
-        if (data.ok && data.audioBase64) {
-          lastGeneratedAudioPath = data.path;
-          audioPlayer.src = 'data:audio/mpeg;base64,' + data.audioBase64;
-          audioPlayer.classList.remove('hidden');
-          audioPlayer.play();
-          sendAudio.disabled = false;
-        } else {
-          ttsError.textContent = data.error || 'Error al generar';
-          ttsError.classList.remove('hidden');
-        }
-      } catch (e) {
-        ttsError.textContent = 'Error de red';
-        ttsError.classList.remove('hidden');
-      }
-      generateAudio.disabled = false;
-      generateAudio.innerHTML = originalHtml;
-    });
-
-    sendAudio.addEventListener('click', async () => {
-      if (!lastGeneratedAudioPath) return;
-      sendAudio.disabled = true;
-      try {
-        const r = await fetch('/api/send-audio', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ audioPath: lastGeneratedAudioPath, target: 'telegram' })
-        });
-        const data = await r.json();
-        if (data.ok) alert('✅ Audio enviado a Telegram');
-        else alert('❌ Error: ' + data.error);
-      } catch (e) { alert('Error de red'); }
-      sendAudio.disabled = false;
-    });
 
     // --- CONFIG INICIAL ---
     (async () => {

@@ -353,89 +353,66 @@ Reglas OBLIGATORIAS:
 - Máx 2 emojis por mensaje.`;
   }
 
+  // Helper: fetch con timeout de 8 segundos
+  const fetchT = (url, opts) => {
+    const ctrl = new AbortController();
+    const id = setTimeout(() => ctrl.abort(), 8000);
+    return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
+  };
+
   // ── PRIORIDAD 1: Google Gemini nativo (1.500/día gratis) ─────────────────────
   const geminiKey = process.env.GEMINI_API_KEY;
   if (geminiKey) {
-    const GEMINI_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
-    for (const gModel of GEMINI_MODELS) {
+    for (const gModel of ['gemini-2.0-flash', 'gemini-1.5-flash']) {
       try {
-        const geminiRes = await fetch(
+        const r = await fetchT(
           `https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${geminiKey}`,
           {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{
-                parts: [{
-                  text: `${systemPrompt}\n\n(Cliente en ${pName} dice): ${message.trim()}`
-                }]
-              }],
-              generationConfig: { maxOutputTokens: 200, temperature: 0.85 }
-            })
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: `${systemPrompt}\n\n(Cliente en ${pName} dice): ${message.trim()}` }] }], generationConfig: { maxOutputTokens: 200, temperature: 0.85 } })
           }
         );
-        if (geminiRes.ok) {
-          const gData = await geminiRes.json();
-          const reply = gData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-          if (reply) {
-            console.log(`[generate-reply] ✅ Respondió Gemini (${gModel})`);
-            return res.json({ ok: true, reply });
-          }
-        } else {
-          const errBody = await geminiRes.text();
-          console.warn(`[generate-reply] Gemini ${gModel} falló (${geminiRes.status}):`, errBody.slice(0, 300));
-        }
-      } catch (e) {
-        console.warn(`[generate-reply] Gemini ${gModel} excepción:`, e.message);
-      }
+        if (r.ok) {
+          const d = await r.json();
+          const reply = d?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (reply) { console.log(`✅ Gemini ${gModel}`); return res.json({ ok: true, reply }); }
+        } else { console.warn(`Gemini ${gModel} error ${r.status}:`, (await r.text()).slice(0, 150)); }
+      } catch (e) { console.warn(`Gemini ${gModel} timeout/err:`, e.message); }
     }
   }
 
-
-  // ── PRIORIDAD 2: OpenRouter modelos gratuitos (respaldo) ────────────────────
-  const MODELOS = [
-    process.env.AI_MODEL_NAME || 'google/gemini-2.0-flash-exp:free',
-    'mistralai/mistral-small-3.1-24b-instruct:free',
-    'meta-llama/llama-3.2-3b-instruct:free',
-    'microsoft/phi-3-mini-128k-instruct:free'
-  ];
-
-  for (const modelId of MODELOS) {
+  // ── PRIORIDAD 2: Groq (14.400/día gratis, ultra-rápido) ──────────────────────
+  const groqKey = process.env.GROQ_API_KEY;
+  if (groqKey) {
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const r = await fetchT('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + apiKey,
-          'HTTP-Referer': 'https://web-dominio-total.onrender.com',
-          'X-Title': 'Aurora Reply Assistant'
-        },
-        body: JSON.stringify({
-          model: modelId,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }
-          ],
-          max_tokens: 200,
-          temperature: 0.85
-        })
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
+        body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }], max_tokens: 200, temperature: 0.85 })
       });
+      if (r.ok) {
+        const d = await r.json();
+        const reply = d?.choices?.[0]?.message?.content?.trim();
+        if (reply) { console.log('✅ Groq'); return res.json({ ok: true, reply }); }
+      } else { console.warn('Groq error:', r.status); }
+    } catch (e) { console.warn('Groq timeout/err:', e.message); }
+  }
 
-      if (!response.ok) {
-        console.warn(`[generate-reply] ${modelId} falló (${response.status}). Probando siguiente...`);
-        continue;
-      }
-
-      const data = await response.json();
-      const reply = data?.choices?.[0]?.message?.content?.trim();
+  // ── PRIORIDAD 3: OpenRouter (respaldo final) ──────────────────────────────────
+  for (const modelId of ['google/gemini-2.0-flash-exp:free', 'meta-llama/llama-3.2-3b-instruct:free', 'microsoft/phi-3-mini-128k-instruct:free']) {
+    try {
+      const r = await fetchT('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (apiKey || ''), 'HTTP-Referer': 'https://web-dominio-total.onrender.com', 'X-Title': 'Aurora' },
+        body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }], max_tokens: 200, temperature: 0.85 })
+      });
+      if (!r.ok) { console.warn(`OpenRouter ${modelId} error ${r.status}`); continue; }
+      const d = await r.json();
+      const reply = d?.choices?.[0]?.message?.content?.trim();
       if (!reply) continue;
-
-      console.log(`[generate-reply] ✅ Respondió con modelo: ${modelId}`);
+      console.log(`✅ OpenRouter: ${modelId}`);
       return res.json({ ok: true, reply });
-
-    } catch (err) {
-      console.warn(`[generate-reply] Excepción con ${modelId}:`, err.message);
-    }
+    } catch (e) { console.warn(`OpenRouter ${modelId} err:`, e.message); }
   }
 
   res.status(500).json({ ok: false, error: 'IA ocupada. Intenta en 1 minuto.' });

@@ -79,6 +79,14 @@ OBJECTION_PATTERNS = {
         r"regalame (una )?foto",
         r"una foto gratis",
         r"foto de prueba"
+    ],
+    "foto_intima": [
+        r"te mando (una )?foto",
+        r"te envío (una )?foto",
+        r"mira mi",
+        r"qué te parece",
+        r"te gusta",
+        r"ves lo que tengo"
     ]
 }
 
@@ -111,7 +119,8 @@ def obtener_instruccion_objecion(tipo: str, perfil: str = "default") -> str:
         "cita": f"No digas que no rotundamente. Como {perfil}, dile que primero debe ganarse tu confianza en el sitio privado y que prefieres lo virtual por seguridad ahora. Crea fantasía, no rechazo.",
         "gratis": "Dile que tu tiempo y tu belleza valen, y que el contenido especial es solo para hombres que de verdad saben apreciar y apoyar a una mujer como tú. Sé firme pero cariñosa.",
         "precio": "Enfócate en la exclusividad. Dile que es el único lugar sin censura donde puedes ser tú misma sin que las redes te bloqueen. Convierte el cobro en un acto de 'exclusividad' y 'apoyo mutuo'.",
-        "foto_gratis": "Da una pequeña 'prueba' visual (menciona una foto pretty pero no explícita) y genera hambre de más. Dile que si quiere ver más, debe ir a tu sitio privado."
+        "foto_gratis": "Da una pequeña 'prueba' visual (menciona una foto pretty pero no explícita) y genera hambre de más. Dile que si quiere ver más, debe ir a tu sitio privado.",
+        "foto_intima": "Te llegó una foto íntima del fan. No la rechaces ni la ignores — eso lo aleja. Reacciona con interés y calor, díle algo como 'ay papi...' o 'mmm interesante', luego crea tensión: 'ahora quiero que veas algo mío también... pero eso está en mi Fanvue, solo para los que entran al club 😈'. Convierte su energía en una venta."
     }
     
     # Instrucciones específicas por perfil
@@ -172,6 +181,11 @@ def obtener_respuesta_rapida(tipo_objecion: str, perfil: str = "default") -> Opt
         "foto_gratis": [
             "Te mando esta que me tomé hoy solo para que veas mi sonrisa... pero si quieres ver lo que hay debajo del uniforme, eso me lo reservo para mis suscriptores VIP. ¿Te atreves a entrar?",
             "Esta foto es demasiado para redes, mejor te la dejé en mi galería prohibida. Ahí puedes ver todo lo que quieras 😉"
+        ],
+        "foto_intima": [
+            "Ay papi... 😳 me hiciste sonrojar. Ahora quiero que veas algo mío también... pero eso solo lo comparto en mi Fanvue con los que entran a mi club 😈 ¿te animas?",
+            "Mmm... interesante 😏 eso me gustó. Ahora la pregunta es... ¿quieres ver algo mío así de especial? Todo está en mi página privada 🔥 fanvue.com/utopiafinca",
+            "Jajaja ay dios... ¿tanto confianza ya? 🙄🔥 Me gusta un hombre así de atrevido. Los atrevidos son los que entran a mi Fanvue y ven lo que yo tengo para ellos 😈"
         ]
     }
     

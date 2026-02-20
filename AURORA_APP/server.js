@@ -352,42 +352,61 @@ Reglas OBLIGATORIAS:
 - Máx 2 emojis por mensaje.`;
   }
 
-  try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
-        'HTTP-Referer': 'https://web-dominio-total.onrender.com',
-        'X-Title': 'Aurora Reply Assistant'
-      },
-      body: JSON.stringify({
-        model: process.env.AI_MODEL_NAME || 'google/gemini-2.0-flash-exp:free',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }
-        ],
-        max_tokens: 200,
-        temperature: 0.85
-      })
-    });
+  // Modelos de respaldo — si uno falla (429/400), prueba el siguiente
+  const MODELOS = [
+    process.env.AI_MODEL_NAME || 'google/gemini-2.0-flash-exp:free',
+    'mistralai/mistral-small-3.1-24b-instruct:free',
+    'meta-llama/llama-3.2-3b-instruct:free',
+    'microsoft/phi-3-mini-128k-instruct:free'
+  ];
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('OpenRouter /api/generate-reply error:', response.status, errText);
-      return res.status(500).json({ ok: false, error: `Error de IA (${response.status}). Verifica tu API key.` });
-    }
+  let lastError = null;
+  for (const modelId of MODELOS) {
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + apiKey,
+          'HTTP-Referer': 'https://web-dominio-total.onrender.com',
+          'X-Title': 'Aurora Reply Assistant'
+        },
+        body: JSON.stringify({
+          model: modelId,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }
+          ],
+          max_tokens: 200,
+          temperature: 0.85
+        })
+      });
 
-    const data = await response.json();
-    const reply = data?.choices?.[0]?.message?.content?.trim();
-    if (!reply) {
-      return res.status(500).json({ ok: false, error: 'La IA no generó respuesta. Intenta de nuevo.' });
+      if (!response.ok) {
+        const errText = await response.text();
+        console.warn(`[generate-reply] Modelo ${modelId} falló (${response.status}). Probando siguiente...`);
+        lastError = `Error ${response.status} en ${modelId}`;
+        continue; // Probar siguiente modelo
+      }
+
+      const data = await response.json();
+      const reply = data?.choices?.[0]?.message?.content?.trim();
+      if (!reply) {
+        lastError = `Sin respuesta de ${modelId}`;
+        continue;
+      }
+
+      console.log(`[generate-reply] ✅ Respondió con modelo: ${modelId}`);
+      return res.json({ ok: true, reply });
+
+    } catch (err) {
+      console.warn(`[generate-reply] Excepción con ${modelId}:`, err.message);
+      lastError = err.message;
     }
-    res.json({ ok: true, reply });
-  } catch (err) {
-    console.error('generate-reply exception:', err.message);
-    res.status(500).json({ ok: false, error: err.message });
   }
+
+  // Si todos los modelos fallaron
+  res.status(500).json({ ok: false, error: 'Todos los modelos de IA están ocupados. Intenta en 1 minuto.' });
 });
 
 // API: generar audio con edge-tts (Python). Colombia = Medellín; USA/UK = Baddie / British Babe

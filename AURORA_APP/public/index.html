@@ -258,15 +258,94 @@
       </div>
     </section>
 
-    <!-- Tu link Fanvue -->
-    <section class="rounded-2xl bg-slate-800/60 border border-slate-700/50 p-4">
-      <div class="flex gap-2 items-center">
-        <span class="text-slate-400 text-sm">Tu link actual:</span>
-        <a id="fanvueLink" href="#" target="_blank" rel="noopener"
-          class="text-rose-400 hover:text-rose-300 font-medium truncate flex-1">—</a>
-        <button id="copyFanvue" type="button"
-          class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs transition disabled:opacity-50"
-          disabled>Copiar Link</button>
+    <!-- Links Rápidos -->
+    <section class="rounded-2xl bg-slate-800/60 border border-slate-700/50 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-slate-200">🔗 Links Rápidos</h2>
+        <span
+          class="px-2 py-0.5 rounded text-[10px] bg-emerald-600/20 text-emerald-400 border border-emerald-600/30 font-medium tracking-wider">COPIA
+          & PEGA</span>
+      </div>
+      <div class="space-y-2" id="linksPanel">
+
+        <!-- Fanvue -->
+        <div class="flex items-center gap-3 bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-700/40">
+          <span class="text-lg">💜</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Fanvue</p>
+            <a href="https://www.fanvue.com/utopiafinca" target="_blank"
+              class="text-sm text-violet-400 hover:text-violet-300 truncate block">fanvue.com/utopiafinca</a>
+          </div>
+          <button onclick="copyLink(this,'https://www.fanvue.com/utopiafinca')"
+            class="px-3 py-1 rounded-lg bg-violet-600/80 hover:bg-violet-500 text-white text-xs font-bold transition active:scale-95 shrink-0">📋
+            Copiar</button>
+        </div>
+
+        <!-- Página de Ventas -->
+        <div class="flex items-center gap-3 bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-700/40">
+          <span class="text-lg">🛒</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Página de Ventas (Ebook)</p>
+            <a href="https://web-dominio-total.vercel.app" target="_blank"
+              class="text-sm text-rose-400 hover:text-rose-300 truncate block">web-dominio-total.vercel.app</a>
+          </div>
+          <button onclick="copyLink(this,'https://web-dominio-total.vercel.app')"
+            class="px-3 py-1 rounded-lg bg-rose-600/80 hover:bg-rose-500 text-white text-xs font-bold transition active:scale-95 shrink-0">📋
+            Copiar</button>
+        </div>
+
+        <!-- Telegram Comunidad -->
+        <div class="flex items-center gap-3 bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-700/40">
+          <span class="text-lg">✈️</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Telegram Comunidad VIP</p>
+            <a href="https://t.me/+QuX6mkbTG7A3Y2Fh" target="_blank"
+              class="text-sm text-sky-400 hover:text-sky-300 truncate block">t.me/+QuX6mkbTG7A3Y2Fh</a>
+          </div>
+          <button onclick="copyLink(this,'https://t.me/+QuX6mkbTG7A3Y2Fh')"
+            class="px-3 py-1 rounded-lg bg-sky-600/80 hover:bg-sky-500 text-white text-xs font-bold transition active:scale-95 shrink-0">📋
+            Copiar</button>
+        </div>
+
+        <!-- Telegram Bot -->
+        <div class="flex items-center gap-3 bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-700/40">
+          <span class="text-lg">🤖</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Bot de Telegram (Aurora)</p>
+            <a href="https://t.me/utopiafincabot" target="_blank"
+              class="text-sm text-sky-400 hover:text-sky-300 truncate block">t.me/utopiafincabot</a>
+          </div>
+          <button onclick="copyLink(this,'https://t.me/utopiafincabot')"
+            class="px-3 py-1 rounded-lg bg-sky-600/80 hover:bg-sky-500 text-white text-xs font-bold transition active:scale-95 shrink-0">📋
+            Copiar</button>
+        </div>
+
+        <!-- Instagram -->
+        <div class="flex items-center gap-3 bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-700/40">
+          <span class="text-lg">📸</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Instagram</p>
+            <a href="https://www.instagram.com/luzdeaurorafeyamor/" target="_blank"
+              class="text-sm text-pink-400 hover:text-pink-300 truncate block">instagram.com/luzdeaurorafeyamor</a>
+          </div>
+          <button onclick="copyLink(this,'https://www.instagram.com/luzdeaurorafeyamor/')"
+            class="px-3 py-1 rounded-lg bg-pink-600/80 hover:bg-pink-500 text-white text-xs font-bold transition active:scale-95 shrink-0">📋
+            Copiar</button>
+        </div>
+
+        <!-- WhatsApp -->
+        <div class="flex items-center gap-3 bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-700/40">
+          <span class="text-lg">💬</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">WhatsApp</p>
+            <a href="https://wa.me/573227198007" target="_blank"
+              class="text-sm text-emerald-400 hover:text-emerald-300 truncate block">+57 322 719 8007</a>
+          </div>
+          <button onclick="copyLink(this,'https://wa.me/573227198007')"
+            class="px-3 py-1 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 text-white text-xs font-bold transition active:scale-95 shrink-0">📋
+            Copiar</button>
+        </div>
+
       </div>
     </section>
   </div>
@@ -424,34 +503,26 @@
     });
 
     // --- CONFIG INICIAL ---
-    voiceSelect.addEventListener('change', () => {
-      if (voiceSelect.value === 'qwen') {
-        styleContainer.classList.remove('opacity-30', 'pointer-events-none');
-        styleContainer.style.filter = 'none';
-      } else {
-        styleContainer.classList.add('opacity-30', 'pointer-events-none');
-        styleContainer.style.filter = 'grayscale(1)';
-      }
-    });
-
     (async () => {
       try {
-        const [rCfg, rAuto] = await Promise.all([fetch('/api/config'), fetch('/api/auto-mode')]);
-        const dCfg = await rCfg.json();
+        const [rAuto] = await Promise.all([fetch('/api/auto-mode')]);
         const dAuto = await rAuto.json();
-        if (dCfg.fanvueLink) {
-          fanvueLink.href = dCfg.fanvueLink;
-          fanvueLink.textContent = dCfg.fanvueLink;
-          copyFanvue.disabled = false;
-          copyFanvue.onclick = () => {
-            navigator.clipboard.writeText(dCfg.fanvueLink);
-            copyFanvue.textContent = '¡Copiado!';
-            setTimeout(() => copyFanvue.textContent = 'Copiar Link', 1500);
-          };
-        }
         setAutoModeUI(!!dAuto.autoMode);
       } catch (e) { }
     })();
+
+    // --- COPIAR LINKS RÁPIDOS ---
+    function copyLink(btn, url) {
+      navigator.clipboard.writeText(url).then(() => {
+        const original = btn.textContent;
+        btn.textContent = '✅ Copiado';
+        btn.classList.add('bg-emerald-600');
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.classList.remove('bg-emerald-600');
+        }, 2000);
+      });
+    }
 
     function escapeHtml(s) {
       const el = document.createElement('div');

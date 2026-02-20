@@ -353,44 +353,44 @@ Reglas OBLIGATORIAS:
 - Máx 2 emojis por mensaje.`;
   }
 
-  // ── PRIORIDAD 1: Google Gemini (1.500/día gratis, sin tarjeta) ──────────────
+  // ── PRIORIDAD 1: Google Gemini nativo (1.500/día gratis) ─────────────────────
   const geminiKey = process.env.GEMINI_API_KEY;
   if (geminiKey) {
     const GEMINI_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
     for (const gModel of GEMINI_MODELS) {
       try {
         const geminiRes = await fetch(
-          'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+          `https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${geminiKey}`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + geminiKey },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              model: gModel,
-              messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }
-              ],
-              max_tokens: 200,
-              temperature: 0.85
+              contents: [{
+                parts: [{
+                  text: `${systemPrompt}\n\n(Cliente en ${pName} dice): ${message.trim()}`
+                }]
+              }],
+              generationConfig: { maxOutputTokens: 200, temperature: 0.85 }
             })
           }
         );
         if (geminiRes.ok) {
           const gData = await geminiRes.json();
-          const reply = gData?.choices?.[0]?.message?.content?.trim();
+          const reply = gData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
           if (reply) {
-            console.log(`[generate-reply] ✅ Respondió ${gModel}`);
+            console.log(`[generate-reply] ✅ Respondió Gemini (${gModel})`);
             return res.json({ ok: true, reply });
           }
         } else {
           const errBody = await geminiRes.text();
-          console.warn(`[generate-reply] Gemini ${gModel} falló (${geminiRes.status}):`, errBody.slice(0, 200));
+          console.warn(`[generate-reply] Gemini ${gModel} falló (${geminiRes.status}):`, errBody.slice(0, 300));
         }
       } catch (e) {
         console.warn(`[generate-reply] Gemini ${gModel} excepción:`, e.message);
       }
     }
   }
+
 
   // ── PRIORIDAD 2: OpenRouter modelos gratuitos (respaldo) ────────────────────
   const MODELOS = [

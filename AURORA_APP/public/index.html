@@ -274,127 +274,29 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const socket = io();
-    const autoModeToggle = document.getElementById('autoModeToggle');
-    const autoModeThumb = document.getElementById('autoModeThumb');
-    const embudoList = document.getElementById('embudoList');
-    const fanvueLink = document.getElementById('fanvueLink');
-    const copyFanvue = document.getElementById('copyFanvue');
-    const logMonitor = document.getElementById('logMonitor');
+    // ─── Socket (solo para modo automático si está activo) ───────────────────
+    try { const socket = io(); } catch (e) { }
 
-    let autoMode = false;
-
-
-    // --- VISOR DE LOGS ---
-    function appendLog(text) {
-      if (!text) return;
-      const p = document.createElement('p');
-      p.className = 'border-l border-emerald-500/30 pl-2 mb-1';
-      p.textContent = text;
-      logMonitor.appendChild(p);
-      logMonitor.scrollTop = logMonitor.scrollHeight;
-      if (logMonitor.children.length > 50) logMonitor.removeChild(logMonitor.firstChild);
-    }
-
-    setInterval(async () => {
-      try {
-        const r = await fetch('/api/instagram-logs');
-        const data = await r.json();
-        if (data.logs) {
-          logMonitor.innerHTML = '';
-          data.logs.split('\n').filter(l => l.trim()).forEach(appendLog);
-        }
-      } catch (e) { }
-    }, 4000);
-
-    // --- MODO AUTOMÁTICO ---
-    function setAutoModeUI(on) {
-      autoMode = on;
-      autoModeToggle.setAttribute('aria-checked', on);
-      if (on) {
-        autoModeToggle.classList.replace('bg-slate-600', 'bg-rose-500');
-        autoModeThumb.classList.replace('translate-x-0.5', 'translate-x-5');
-      } else {
-        autoModeToggle.classList.replace('bg-rose-500', 'bg-slate-600');
-        autoModeThumb.classList.replace('translate-x-5', 'translate-x-0.5');
-      }
-    }
-
-    autoModeToggle.addEventListener('click', async () => {
-      const next = !autoMode;
-      setAutoModeUI(next);
-      try {
-        await fetch('/api/auto-mode', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ autoMode: next })
-        });
-      } catch (e) { }
-    });
-
-    socket.on('autoMode', (value) => setAutoModeUI(!!value));
-
-    // --- EMBUDO ---
-    socket.on('embudo', (list) => {
-      embudoList.innerHTML = '';
-      if (!list || list.length === 0) {
-        embudoList.innerHTML = '<p class="text-slate-500 text-sm text-center py-10">Esperando actividad de Instagram...</p>';
-        return;
-      }
-      const labels = ['Enamoramiento', 'Calentamiento', 'Venta / Fanvue'];
-      const colors = ['bg-blue-500', 'bg-amber-500', 'bg-rose-500'];
-
-      list.sort((a, b) => b.hours_ago - a.hours_ago).forEach((c) => {
-        const phase = Math.min(3, Math.max(1, c.phase || 1));
-        const name = c.username || c.chatName || 'Usuario';
-        const div = document.createElement('div');
-        div.className = 'bg-slate-800/40 p-3 rounded-xl border border-slate-700/30';
-        div.innerHTML = `
-          <div class="flex justify-between items-start mb-1">
-            <span class="font-medium text-slate-200 truncate">${name}</span>
-            <span class="text-[10px] text-slate-500">${c.hours_ago}h ago</span>
-          </div>
-          <p class="text-xs text-slate-400 truncate mb-2">"${c.body || '...'}"</p>
-          <div class="flex gap-1">
-            ${[1, 2, 3].map(p => `<span class="h-1.5 flex-1 rounded-full ${p <= phase ? colors[p - 1] : 'bg-slate-700'}"></span>`).join('')}
-          </div>
-        `;
-        embudoList.appendChild(div);
-      });
-    });
-
-
-    // --- CONFIG INICIAL ---
-    (async () => {
-      try {
-        const [rAuto] = await Promise.all([fetch('/api/auto-mode')]);
-        const dAuto = await rAuto.json();
-        setAutoModeUI(!!dAuto.autoMode);
-      } catch (e) { }
-    })();
-
-    // --- COPIAR LINKS RÁPIDOS ---
+    // ─── Copiar links rápidos ────────────────────────────────────────────────
     function copyLink(btn, url) {
       navigator.clipboard.writeText(url).then(() => {
-        const original = btn.textContent;
+        const orig = btn.textContent;
         btn.textContent = '✅ Copiado';
-        btn.classList.add('bg-emerald-600');
-        setTimeout(() => {
-          btn.textContent = original;
-          btn.classList.remove('bg-emerald-600');
-        }, 2000);
+        setTimeout(() => { btn.textContent = orig; }, 2000);
+      }).catch(() => {
+        const el = document.createElement('textarea');
+        el.value = url;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        const orig = btn.textContent;
+        btn.textContent = '✅ Copiado';
+        setTimeout(() => { btn.textContent = orig; }, 2000);
       });
     }
 
-    function escapeHtml(s) {
-      const el = document.createElement('div');
-      el.textContent = s;
-      return el.innerHTML;
-    }
-
-    // ═══════════════════════════════════════════
-    // ASISTENTE DE RESPUESTAS
-    // ═══════════════════════════════════════════
+    // ─── Asistente de Respuestas ─────────────────────────────────────────────
     const generateReply = document.getElementById('generateReply');
     const replyInput = document.getElementById('replyInput');
     const replyPlatform = document.getElementById('replyPlatform');

@@ -362,7 +362,7 @@ Reglas OBLIGATORIAS:
         'X-Title': 'Aurora Reply Assistant'
       },
       body: JSON.stringify({
-        model: process.env.AI_MODEL_NAME || 'meta-llama/llama-3.3-70b-instruct:free',
+        model: process.env.AI_MODEL_NAME || 'google/gemini-2.0-flash-exp:free',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }

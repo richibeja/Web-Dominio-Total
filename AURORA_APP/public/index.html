@@ -177,59 +177,7 @@
       <p id="replyError" class="text-rose-400 text-sm hidden mt-2"></p>
     </section>
 
-    <!-- Responder a Telegram -->
-    <section class="rounded-2xl bg-slate-800/60 border border-slate-700/50 p-6 mb-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold text-slate-200">Enviar nota de voz a Telegram</h2>
-        <span
-          class="px-2 py-0.5 rounded text-[10px] bg-rose-600/30 text-rose-400 border border-rose-600/50 font-medium tracking-wider">MOTOR
-          IA: QWEN3 ACTIVADO</span>
-      </div>
-      <div class="space-y-4">
-        <textarea id="ttsText" rows="3" placeholder="Escribe lo que quieres que diga la voz..."
-          class="w-full rounded-xl bg-slate-900/80 border border-slate-600 text-slate-100 placeholder-slate-500 px-4 py-3 resize-none focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500 outline-none transition"></textarea>
-        <div class="flex flex-wrap items-center gap-3">
-          <div
-            class="flex items-center gap-3 bg-slate-900/90 border border-rose-500/30 rounded-xl px-4 py-3 ring-1 ring-white/5 shadow-inner">
-            <div class="flex flex-col">
-              <span class="text-rose-400 text-[9px] font-bold uppercase tracking-[0.2em] mb-0.5">Idioma / Voz</span>
-              <select id="voiceSelect"
-                class="bg-transparent text-slate-50 text-sm font-medium focus:outline-none cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23fb7185%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px] bg-[right_0px_center] bg-no-repeat">
-                <option value="qwen" class="bg-slate-900 text-white" selected>✨ Qwen3 (Identidad Única)</option>
-              </select>
-            </div>
-          </div>
 
-          <!-- Estilo de Voz (Qwen3) -->
-          <div id="styleContainer"
-            class="flex items-center gap-3 bg-slate-900/40 border border-slate-700/50 rounded-xl px-4 py-3 ring-1 ring-white/5">
-            <div class="flex flex-col">
-              <span class="text-slate-500 text-[9px] font-bold uppercase tracking-[0.2em] mb-0.5 text-center">Estilo
-                Emocional</span>
-              <select id="styleSelect"
-                class="bg-transparent text-slate-300 text-sm font-medium focus:outline-none cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394a3b8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px] bg-[right_0px_center] bg-no-repeat">
-                <option value="Sonrisa" class="bg-slate-900 text-white">😊 Sonrisa Real</option>
-                <option value="Mia" class="bg-slate-900 text-white">✨ Mia (Elite Gold)</option>
-                <option value="Stella" class="bg-slate-900 text-white">🌸 Stella (Elite Rose)</option>
-                <option value="EnglishBabe" class="bg-slate-900 text-white">✨ English Babe (Gringa)</option>
-                <option value="Bodega" class="bg-slate-900 text-white">🎙️ Bodega (Natural)</option>
-              </select>
-            </div>
-          </div>
-          <button id="generateAudio"
-            class="flex-1 px-6 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(79,70,229,0.3)] flex items-center justify-center gap-2">
-            <span>✨</span> GENERAR CON QWEN
-          </button>
-          <button id="sendAudio"
-            class="flex-1 px-6 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-30 disabled:grayscale flex items-center justify-center gap-2"
-            disabled>
-            <span>🚀</span> ENVIAR A TELEGRAM
-          </button>
-        </div>
-        <audio id="audioPlayer" class="w-full hidden" controls></audio>
-        <p id="ttsError" class="text-rose-400 text-sm hidden"></p>
-      </div>
-    </section>
 
     <!-- Links Rápidos -->
     <section class="rounded-2xl bg-slate-800/60 border border-slate-700/50 p-5">

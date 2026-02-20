@@ -1,6 +1,13 @@
 node_modules/
 .wwebjs_auth/
 .wwebjs_cache/
+baileys_auth/
+baileys_store/
+auth_sesion_nueva/
 .env
 *.log
 data/nuevos_clientes.json
+voice_output/
+__pycache__/
+*.pyc
+media/

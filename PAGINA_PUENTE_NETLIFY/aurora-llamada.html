@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Videollamada con Aurora</title>
+    <!-- Tailwind CSS para el diseño rápido -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            /* Fondo oscuro */
+            color: white;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* Animación de pulso para el botón activo */
+        .pulse-active {
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 20px rgba(236, 72, 153, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(236, 72, 153, 0);
+            }
+        }
+
+        /* Animación de barras de voz (simulación) */
+        .voice-bars {
+            display: none;
+            gap: 4px;
+            align-items: center;
+            height: 40px;
+        }
+
+        .voice-bars.active {
+            display: flex;
+        }
+
+        .bar {
+            width: 6px;
+            background-color: #ec4899;
+            border-radius: 4px;
+            animation: sound 0ms -800ms linear infinite alternate;
+        }
+
+        @keyframes sound {
+            0% {
+                height: 4px;
+                opacity: 0.5;
+            }
+
+            100% {
+                height: 32px;
+                opacity: 1;
+            }
+        }
+
+        .bar:nth-child(1) {
+            left: 1px;
+            animation-duration: 474ms;
+        }
+
+        .bar:nth-child(2) {
+            left: 15px;
+            animation-duration: 433ms;
+        }
+
+        .bar:nth-child(3) {
+            left: 29px;
+            animation-duration: 407ms;
+        }
+
+        .bar:nth-child(4) {
+            left: 43px;
+            animation-duration: 458ms;
+        }
+
+        .bar:nth-child(5) {
+            left: 57px;
+            animation-duration: 400ms;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 flex flex-col items-center justify-center min-h-screen">
+
+    <!-- Avatar de Aurora -->
+    <div class="relative w-40 h-40 mb-6">
+        <img src="https://i.ibb.co/6wZ2wTf/aurora-avatar.jpg" alt="Aurora"
+            class="w-full h-full rounded-full object-cover border-4 border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.5)]">
+        <div id="status-indicator"
+            class="absolute bottom-2 right-2 w-5 h-5 bg-green-500 rounded-full border-2 border-gray-900"></div>
+    </div>
+
+    <!-- Texto de estado -->
+    <h1 class="text-3xl font-bold mb-2 text-pink-500">Aurora 💋</h1>
+    <p id="status-text" class="text-gray-400 mb-8 text-lg">En línea. Esperando tu llamada...</p>
+
+    <!-- Visualizador de voz (cuando la llamada está activa) -->
+    <div id="voice-visualizer" class="voice-bars mb-8">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+    </div>
+
+    <!-- Botón de Acción Principal -->
+    <button id="call-button"
+        class="bg-pink-600 hover:bg-pink-700 text-white font-bold rounded-full w-20 h-20 flex items-center justify-center transition-all shadow-lg">
+        <!-- Icono de teléfono -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-telephone-fill"
+            viewBox="0 0 16 16">
+            <path fill-rule="evenodd"
+                d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.634 18.634 0 0 1-7.01-4.42 18.634 18.634 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877L1.885.511z" />
+        </svg>
+    </button>
+
+    <div class="mt-8 text-sm text-gray-500 max-w-xs text-center">
+        Al llamar aceptas que Aurora grabe la conversación. Usa audífonos para una mejor experiencia. 🎧
+    </div>
+
+    <!-- SDK de Vapi.ai -->
+    <script>
+        // Inicializar la variable de Vapi globalmente para accederla más tarde
+        var vapiInstance = null;
+
+        (function (d, t) {
+            var g = document.createElement(t),
+                s = d.getElementsByTagName(t)[0];
+            g.src =
+                "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+            g.defer = true;
+            g.async = true;
+            s.parentNode.insertBefore(g, s);
+
+            g.onload = function () {
+                // Configurar Vapi con tu Public Key
+                vapiInstance = window.vapiSDK.run({
+                    apiKey: "0692a6c3-c2ed-48ec-8ca3-51cb3fcd2684", // TU PUBLIC KEY (Permitido lado del cliente)
+                    assistant: "e11c0530-f21d-4d8b-aa6d-1a65714907a3", // EL ASSISTANT ID GENERADO (Reemplazar)
+                });
+
+                setupUIEvents();
+            };
+        })(document, "script");
+
+        function setupUIEvents() {
+            const callBtn = document.getElementById('call-button');
+            const statusText = document.getElementById('status-text');
+            const visualizer = document.getElementById('voice-visualizer');
+            const statusIndicator = document.getElementById('status-indicator');
+            let isCalling = false;
+
+            // Manejador del botón
+            callBtn.addEventListener('click', () => {
+                if (!isCalling) {
+                    // Iniciar llamada
+                    vapiInstance.start();
+                    statusText.innerText = "Conectando con Aurora...";
+                    callBtn.classList.remove('bg-pink-600', 'hover:bg-pink-700');
+                    callBtn.classList.add('bg-red-600', 'hover:bg-red-700', 'pulse-active');
+                    // Cambiar icono a colgar
+                    callBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-telephone-x-fill" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.634 18.634 0 0 1-7.01-4.42 18.634 18.634 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877L1.885.511zm10.261.17a.5.5 0 0 1 .708 0L14 1.879l1.146-1.147a.5.5 0 0 1 .708.708L14.707 2.58l1.147 1.146a.5.5 0 0 1-.708.708L14 3.293l-1.146 1.147a.5.5 0 0 1-.708-.708L13.293 2.58l-1.147-1.146a.5.5 0 0 1 0-.708z"/></svg>';
+                } else {
+                    // Colgar llamada
+                    vapiInstance.stop();
+                    resetUI();
+                }
+                isCalling = !isCalling;
+            });
+
+            // Eventos de Vapi
+            vapiInstance.on('call-start', () => {
+                statusText.innerText = "Llamada conectada 📞 Hblale a Aurora";
+                visualizer.classList.add('active');
+                statusIndicator.classList.remove('bg-green-500');
+                statusIndicator.classList.add('bg-red-500'); // Indicativo de "grabando/en llamada"
+            });
+
+            vapiInstance.on('call-end', () => {
+                resetUI();
+                isCalling = false;
+                // Pequeña redirección ficticia al terminar
+                setTimeout(() => {
+                    statusText.innerText = "Aurora te espera en su cuarto privado...";
+                    statusText.innerHTML += '<br><a href="https://www.fanvue.com/utopiafinca" class="text-pink-400 font-bold underline mt-2 block" target="_blank">IR AL VIP</a>';
+                }, 1500);
+            });
+
+            vapiInstance.on('error', (e) => {
+                console.error("Vapi Error:", e);
+                resetUI();
+                isCalling = false;
+                statusText.innerText = "Se cayó la señal amor... intenta de nuevo.";
+            });
+
+            function resetUI() {
+                callBtn.classList.remove('bg-red-600', 'hover:bg-red-700', 'pulse-active');
+                callBtn.classList.add('bg-pink-600', 'hover:bg-pink-700');
+                callBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-telephone-fill" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.634 18.634 0 0 1-7.01-4.42 18.634 18.634 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877L1.885.511z"/></svg>';
+                statusText.innerText = "En línea. Esperando tu llamada...";
+                visualizer.classList.remove('active');
+                statusIndicator.classList.remove('bg-red-500');
+                statusIndicator.classList.add('bg-green-500');
+            }
+        }
+    </script>
+</body>
+
+</html>

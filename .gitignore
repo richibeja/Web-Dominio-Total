@@ -26,3 +26,11 @@ temp/
 tmp/
 *.zip
 *.rar
+
+# Archivos Sensibles de Firebase/Google
+serviceAccountKey.json
+FIREBASE_KEY.json
+firebase_key.json
+*.json
+!package.json
+!composer.json

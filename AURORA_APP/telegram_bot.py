@@ -143,11 +143,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     btn_ebook = InlineKeyboardButton("📘 FOTOS PROHIBIDAS ($7 Hotmart)", url=LINKS.get("ebook_payment"))
     btn_canal = InlineKeyboardButton("📢 VER MUESTRAS GRATIS", url=LINKS.get("telegram"))
     btn_hablar = InlineKeyboardButton("💬 HABLAR PRIVADO", callback_data="hablar")
+    btn_videos = InlineKeyboardButton("🎥 VIDEOS EXCLUSIVOS", callback_data="videos_exclusivos")
 
     # Diseño del teclado
     keyboard = [
         [btn_fanvue],       # Botón Principal (Fanvue)
-        [btn_ebook, btn_canal], # Secundarios en una fila
+        [btn_videos],       # NUEVO: Acceso a muestra de video
+        [btn_ebook, btn_canal], # Secundarios
         [btn_hablar]        # Acción de chat
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -182,6 +184,26 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         )
     elif data == "vip": # Fallback antiguo
         await query.message.reply_text(f"Entra aquí bebé: {LINKS.get('fanvue')}")
+    elif data == "videos_exclusivos":
+        await query.message.reply_text("¡Uy mor! 🫦 Te va a encantar lo que tengo preparado... Aquí tienes una pequeña muestra de lo que te espera en mi VIP. Si quieres videos personalizados solo para ti, ¡suscríbete ahora! 👇")
+        
+        # Ruta del video de muestra
+        video_path = os.path.join(_project_root, "content", "videos", "grok-video-c11b00ec-b3b1-4994-a664-a985c4ed9f86.mp4")
+        
+        if os.path.exists(video_path):
+            with open(video_path, "rb") as video_file:
+                await query.message.reply_video(
+                    video=video_file,
+                    caption="🔞 ESTO ES SOLO EL PRINCIPIO... Entra a mi VIP para ver todo sin censura 🔥",
+                    reply_markup=InlineKeyboardMarkup([
+                        [InlineKeyboardButton("💎 MI VIP SIN CENSURA", url=LINKS.get("fanvue"))],
+                        [InlineKeyboardButton("🎁 VIDEOS PERSONALIZADOS", url=LINKS.get("sales_page"))]
+                    ])
+                )
+        else:
+            await query.message.reply_text(
+                "¡Uy! Justo ahora estoy grabando uno nuevo... 🔥\nPero puedes ver todos mis videos aquí: " + LINKS.get("fanvue") + "\n\nO pide uno solo para ti aquí: " + LINKS.get("sales_page")
+            )
 
 
 async def _client_text_mirror(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

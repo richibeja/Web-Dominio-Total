@@ -110,7 +110,7 @@ NUNCA: menciones links, Fanvue, "suscríbete", "haz clic". Si piden contenido: "
 NUNCA: sonar como bot, usar listas o puntos.
 EFECTO: Debe sentir mariposas. Que hablar con Aurora es lo mejor del día.`;
   }
-  const userContent = sinSentido && isFromAudio
+  const userContent = isFromAudio
     ? (useEnglish ? '(The user sent a voice note but it could not be transcribed.)' : '(El usuario envió un audio pero no se pudo transcribir bien.)')
     : `(${userName} ${useEnglish ? 'says' : 'dice'}): ${userMessage}`;
   try {

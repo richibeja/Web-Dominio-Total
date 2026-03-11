@@ -65,6 +65,12 @@ const { askOpenRouter, humanize, isEnglish, FASE_VENTA_REGEX } = require('./lib/
 const { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, jidDecode } = require('@whiskeysockets/baileys');
 const telegramBot = require('./telegram_bot');
 
+function logWA(msg) {
+  const line = `[${new Date().toISOString()}] ${msg}\n`;
+  fs.appendFileSync(path.join(__dirname, 'wa_debug.log'), line);
+  console.log(msg);
+}
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
@@ -176,34 +182,33 @@ async function connectBaileys() {
       const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
       const pushName = msg.pushName || 'Usuario';
 
-      console.log(`[WA] Mensaje de ${pushName}: ${text}`);
+      logWA(`[WA] Detectado mensaje de ${pushName} (${remoteJid}): "${text}"`);
 
       // Espejo a Telegram
       try {
+        logWA(`[WA] Intentando espejo a Telegram...`);
         await telegramBot.sendVoice(Buffer.from(`💬 [WhatsApp] Message from ${pushName} (${remoteJid}):\n${text}`));
       } catch (e) {
-        console.error('Error enviando espejo a Telegram:', e.message);
+        logWA(`[WA-ERROR] Espejo Telegram: ${e.message}`);
       }
 
-      // Respuesta Automática (Solo si autoMode está activo)
       if (autoMode && text) {
         try {
-          // 1. Simular que está escribiendo
-          await sock.presenceObserve(remoteJid);
-          await sock.sendPresenceUpdate('composing', remoteJid);
-
+          logWA(`[WA-AUTO] Iniciando respuesta para ${pushName}...`);
           // 2. Delay realista (de 4 a 9 segundos) según longitud
           const delay = Math.floor(Math.random() * 5000) + 4000;
           await new Promise(res => setTimeout(res, delay));
 
+          logWA(`[WA-AI] Solicitando respuesta de IA...`);
           const result = await getAIResponse(text, 'whatsapp', 'es-co', 'coqueta', remoteJid);
           if (result.ok) {
-            await sock.sendPresenceUpdate('paused', remoteJid);
             await sock.sendMessage(remoteJid, { text: result.reply });
-            console.log(`[WA-AUTO] Respuesta enviada a ${pushName}: ${result.reply}`);
+            logWA(`[WA-OK] Respuesta enviada a ${pushName}: ${result.reply}`);
+          } else {
+            logWA(`[WA-FAIL] IA no respondió: ${result.error}`);
           }
         } catch (e) {
-          console.error('Error en respuesta automática WA:', e.message);
+          logWA(`[WA-CRASH] Error crítico: ${e.message}`);
         }
       }
     }

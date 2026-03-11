@@ -40,7 +40,13 @@ def main():
             
         vh = VoiceHandler()
         
-        # El VoiceHandler ya maneja Qwen3 si está configurado en .env o forzado aquí
+        # Configurar proveedor y voz según argumentos
+        if args.voice == "qwen":
+            vh.voice_provider = "qwen"
+        else:
+            vh.voice_provider = "gtts" # gtts usa edge-tts internamente en VoiceHandler
+            os.environ["VOICE_EDGE_CODE"] = args.voice
+            
         out_path = vh.generate_voice(args.text, user_id="web_manual")
         
         if out_path and os.path.exists(out_path):

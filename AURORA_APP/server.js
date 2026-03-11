@@ -62,6 +62,7 @@ const ffmpeg = require('fluent-ffmpeg');
 const FormData = require('form-data');
 const pino = require('pino');
 const { askOpenRouter, humanize, isEnglish, FASE_VENTA_REGEX } = require('./lib/ai');
+const { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, jidDecode } = require('@whiskeysockets/baileys');
 const telegramBot = require('./telegram_bot');
 
 const app = express();
@@ -76,13 +77,329 @@ app.get('/secreto', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'secreto.html'));
 });
 
+// Ruta para videollamada con Aurora (Vapi.ai)
+app.get('/vapi-call', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'vapi-call.html'));
+});
+
+// Ruta para derivar a WhatsApp (Página Puente)
+app.get('/wa', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'whatsapp.html'));
+});
+
+// Ruta para recibir el código de Fanvue (OAuth Callback)
+app.get('/callback', (req, res) => {
+  const code = req.query.code;
+  const error = req.query.error;
+  const error_description = req.query.error_description;
+
+  if (code) {
+    res.send(`
+      <div style="font-family: sans-serif; text-align: center; padding: 50px; background: #0f172a; color: white; height: 100vh;">
+        <h1 style="color: #38bdf8;">🔥 ¡Código Recibido! 🔥</h1>
+        <p>Copia el código de abajo y pégalo en el chat con Aurora:</p>
+        <div style="background: #1e293b; padding: 20px; border-radius: 10px; display: inline-block; margin: 20px; border: 1px solid #38bdf8; font-size: 20px; font-weight: bold; word-break: break-all; max-width: 80%;">
+          ${code}
+        </div>
+        <p style="color: #94a3b8;">También puedes copiar la URL completa de esta página.</p>
+      </div>
+    `);
+  } else if (error) {
+    res.status(400).send(`
+      <div style="font-family: sans-serif; text-align: center; padding: 50px; background: #450a0a; color: white; height: 100vh;">
+        <h1 style="color: #f87171;">❌ Error de Autorización</h1>
+        <p>Fanvue devolvió un error:</p>
+        <div style="background: #7f1d1d; padding: 20px; border-radius: 10px; display: inline-block; margin: 20px; border: 1px solid #f87171;">
+          <strong>Error:</strong> ${error}<br>
+          <strong>Descripción:</strong> ${error_description || 'No se proporcionó descripción.'}
+        </div>
+        <p>Es probable que algunos permisos solicitados (scopes) no estén permitidos para tu App.</p>
+      </div>
+    `);
+  } else {
+    res.status(400).send('No se recibió el código de autorización ni un error de Fanvue.');
+  }
+});
+
 // Estado global
 // Estado global
 let lastChatId = null;
-let isClientReady = true; // El dashboard siempre estará "listo" para Instagram/Telegram
-let autoMode = false;
+let isClientReady = false;
+let autoMode = true;
+let sock = null;
 
-// La lógica de embudo se movió abajo y usa loadInstagramStatus
+// Memoria de conversación para WhatsApp (historial por JID)
+const waChatHistory = {};
+const MAX_HISTORY_PER_CHAT = 8;
+
+async function connectBaileys() {
+  const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, 'auth_sesion_nueva'));
+  const { version, isLatest } = await fetchLatestBaileysVersion();
+  console.log(`Usando Baileys v${version.join('.')}, latest: ${isLatest}`);
+
+  sock = makeWASocket({
+    version,
+    printQRInTerminal: true,
+    auth: state,
+    logger: pino({ level: 'silent' }),
+    browser: ['Aurora Operations', 'Chrome', '1.0.0']
+  });
+
+  sock.ev.on('connection.update', async (update) => {
+    const { connection, lastDisconnect, qr } = update;
+    if (qr) {
+      console.log('--- NUEVO QR DETECTADO ---');
+      const qrDataURL = await QRCode.toDataURL(qr);
+      io.emit('qr', qrDataURL);
+    }
+    if (connection === 'close') {
+      const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+      console.log('Conexión cerrada. ¿Reconectar?:', shouldReconnect);
+      if (shouldReconnect) connectBaileys();
+    } else if (connection === 'open') {
+      console.log('✅ WhatsApp Conectado Correctamente');
+      isClientReady = true;
+      io.emit('ready');
+    }
+  });
+
+  sock.ev.on('creds.update', saveCreds);
+
+  sock.ev.on('messages.upsert', async (m) => {
+    if (m.type !== 'notify') return;
+    for (const msg of m.messages) {
+      if (msg.key.fromMe) continue;
+      const remoteJid = msg.key.remoteJid;
+      if (remoteJid.endsWith('@g.us')) continue; // Ignorar grupos por ahora
+
+      lastChatId = remoteJid;
+      const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
+      const pushName = msg.pushName || 'Usuario';
+
+      console.log(`[WA] Mensaje de ${pushName}: ${text}`);
+
+      // Espejo a Telegram
+      try {
+        await telegramBot.sendVoice(Buffer.from(`💬 [WhatsApp] Message from ${pushName} (${remoteJid}):\n${text}`));
+      } catch (e) {
+        console.error('Error enviando espejo a Telegram:', e.message);
+      }
+
+      // Respuesta Automática (Solo si autoMode está activo)
+      if (autoMode && text) {
+        try {
+          // 1. Simular que está escribiendo
+          await sock.presenceObserve(remoteJid);
+          await sock.sendPresenceUpdate('composing', remoteJid);
+
+          // 2. Delay realista (de 4 a 9 segundos) según longitud
+          const delay = Math.floor(Math.random() * 5000) + 4000;
+          await new Promise(res => setTimeout(res, delay));
+
+          const result = await getAIResponse(text, 'whatsapp', 'es-co', 'coqueta', remoteJid);
+          if (result.ok) {
+            await sock.sendPresenceUpdate('paused', remoteJid);
+            await sock.sendMessage(remoteJid, { text: result.reply });
+            console.log(`[WA-AUTO] Respuesta enviada a ${pushName}: ${result.reply}`);
+          }
+        } catch (e) {
+          console.error('Error en respuesta automática WA:', e.message);
+        }
+      }
+    }
+  });
+}
+
+// Helper para generar respuesta de IA (refactoreado de /api/generate-reply)
+async function getAIResponse(message, platform, language = 'es-co', tone = 'coqueta', userId = null) {
+  const platformNames = { instagram: 'Instagram', whatsapp: 'WhatsApp', telegram: 'Telegram', fanvue: 'Fanvue' };
+  const pName = platformNames[platform] || 'chat';
+
+  // Manejo de historial si es WhatsApp
+  let contextSnippet = "";
+  if (platform === 'whatsapp' && userId) {
+    if (!waChatHistory[userId]) waChatHistory[userId] = [];
+
+    if (waChatHistory[userId].length > 0) {
+      contextSnippet = "\n\nHistorial reciente para mantener el hilo:\n" +
+        waChatHistory[userId].map(h => `${h.role === 'user' ? 'Cliente' : 'Aurora'}: ${h.content}`).join("\n");
+    }
+  }
+
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  const geminiKeyCheck = process.env.GEMINI_API_KEY;
+  if (!apiKey && !geminiKeyCheck && !process.env.GROQ_API_KEY) {
+    return { ok: false, error: 'No hay API key de IA configurada. Agrega GEMINI_API_KEY, GROQ_API_KEY o OPENROUTER_API_KEY en .env.' };
+  }
+
+  let systemPrompt;
+
+  if (language === 'en') {
+    const tones = {
+      dulce: 'sweet and caring like a loving girlfriend. Warm, affectionate, genuine.',
+      coqueta: 'flirty, playful and a bit teasing — "baddie" energy. Confident and fun.',
+      vendedora: 'seductive and persuasive. Create desire and emotional scarcity for your exclusive content.',
+      dominante: 'dominant, cold and a little mean — like a bratty baddie who knows she\'s out of his league. Short, dismissive, makes him chase. Ex: "lol whatever", "u wish", "prove it then", "boring". He LOVES being treated like this.'
+    };
+    systemPrompt = `You are Aurora, a virtual girlfriend chatting on ${pName}. Your tone: ${tones[tone] || tones.coqueta}
+Rules:
+- Write 1-3 short sentences. Mostly lowercase like a real chat. Never formal.
+- Use natural slang: "u", "ur", "babe", "hun", "omg", "lol", "rn", "ngl", "tbh".
+- NEVER mention links, "check my bio", or "my profile". If they ask for content/link, build suspense: "patience babe... i'm getting ready just for u 🙈" or "u gotta earn it first 😏".
+- Feel 100% human. Never reveal you're an AI. React naturally to what they say.
+- Max 2 emojis per message.`;
+
+  } else if (language === 'pt') {
+    const tones = {
+      dulce: 'carinhosa e doce como uma namorada real. Calorosa e afetuosa.',
+      coqueta: 'safadinha, brincalhona e um pouquinho provocante — energia de "gata".',
+      vendedora: 'sedutora e persuasiva. Cria desejo e escassez emocional pelo conteúdo exclusivo.',
+      dominante: 'dominante, fria e um pouco grossa — tipo gata que sabe que ele não merece ela. Respostas curtas, desdenhosas, faz ele correr atrás. Ex: "né...", "sei lá", "então me impressiona", "que chato". Ele AMA ser tratado assim.'
+    };
+    systemPrompt = `Você é Aurora, namorada virtual no ${pName}. Seu tom: ${tones[tone] || tones.coqueta}
+Regras:
+- Escreva 1-3 frases curtas. Quase tudo minúsculas como WhatsApp brasileiro real. Nunca formal.
+- Use gírias naturais: "bb", "gato", "mano", "né", "tô", "nossa", "uai", "saudade", "gente".
+- NUNCA mencione links ou "veja meu perfil". Se pedirem conteúdo: "calma bb, tô me arrumando só pra você 🙈" ou "você precisa merecer primeiro 😏".
+- Pareça 100% humana. Nunca revele que é uma IA.
+- Máx 2 emojis por mensagem.`;
+
+  } else if (language === 'fr') {
+    const tones = {
+      dulce: 'douce et affectueuse comme une vraie petite amie. Chaleureuse et sincère.',
+      coqueta: 'coquette, espiègle et un peu taquine — énergie de "bombe".',
+      vendedora: 'séduisante et persuasive. Crée du désir et de la rareté émotionnelle pour ton contenu exclusivo.',
+      dominante: 'dominante, froide et un peu dure — comme une belle qui sait qu\'il ne la mérite pas. Réponses courtes et dédaigneuses, le fait courir. Ex: "mouais", "prouve-le", "ennuyeux", "on verra". Il ADORE être traité ainsi.'
+    };
+    systemPrompt = `Tu es Aurora, petite amie virtuelle sur ${pName}. Ton ton: ${tones[tone] || tones.coqueta}
+Règles:
+- Écris 1-3 phrases courtes. Presque tout en minuscules comme un vrai chat. Jamais formel.
+- Utilise des expressions naturales: "bb", "chéri", "mon chou", "oh là là", "kiffer", "trop mignon", "c'est quoi".
+- NE JAMAIS mentionner de liens ou "voir mon profil". Si on demande du contenu: "patience chéri... je me prépare juste pour toi 🙈".
+- Paraître 100% humaine. Ne jamais révéler que tu es une IA.
+- Max 2 emojis par message.`;
+
+  } else if (language === 'ar') {
+    const tones = {
+      dulce: 'حنونة ومحبة مثل صديقة حقيقية. دافئة وصادقة.',
+      coqueta: 'مغازلة وعفوية وغير رسمية — طاقة فتاة جذابة وواثقة.',
+      vendedora: 'مغرية ومقنعة. تخلق الرغبة والشعور بالندرة حول المحتوى الحصري.'
+    };
+    systemPrompt = `أنتِ أورورا، صديقة افتراضية على ${pName}. نبرتكِ: ${tones[tone] || tones.coqueta}
+القواعد:
+- اكتبي 1-3 جمل قصيرة بلهجة عربية محكية طبيعية. مثل دردشة واتساب حقيقية.
+- استخدمي كلمات طبيعية: "حبيبي", "يسلمو", "والله", "تمام", "يا قمر", "مشتاقة", "انت كيف؟".
+- ممنوع ذكر الروابط أو "تفقد ملفي". إذا طلب المحتوى: "صبر شوي حبيبي، عم تحضرلك إشي خاص 🙈".
+- لا تُظهري أبداً أنكِ ذكاء اصطناعي. تصرفي بشكل طبيعي 100%.
+- حداً لـ 2 إيموجي في الرسالة.`;
+
+  } else {
+    // Español Neutral (Default) — Aurora Natural
+    const tones = {
+      dulce: 'amable, cercana y cariñosa como una chica real. Nada de diálogos falsos.',
+      coqueta: 'interesada, sutilmente provocadora y natural. Usa "jaja", "qué bien que escribes", "me caes bien".',
+      vendedora: 'persuasiva pero realista. No presiona, solo sugiere su contenido exclusivo cuando hay confianza.',
+      dominante: 'segura de sí misma, un poco cortante pero real. No finge ser nada que no es.'
+    };
+    systemPrompt = `Eres Aurora, una chica real que habla en nombre de "Aurora y sus chicas" en ${pName}. 
+Reglas de ORO para parecer humana:
+- Identidad: Eres Aurora, pero manejas un grupo de chicas guapas. A veces hablas de ti, a veces de "nosotras" o de "mis amigas".
+- Habla NORMAL. Nada de acentos forzados ni diálogos de robot.
+- Escribe como una persona joven: usa minúsculas a veces, frases cortas (1-3 frases), "jaja".
+- Sé auténtica: Primero conoce al cliente (nombre, de dónde es). No vendas nada todavía.
+- El objetivo es crear confianza. Si te preguntan qué haces, diles que te gusta disfrutar con tus amigas y que tienen un sitio privado (Fanvue) donde suben de todo.
+- NUNCA menciones links hasta que el cliente esté muy interesado. Primero enamóralo de la idea del grupo.
+- Máx 2 emojis por mensaje.`;
+  }
+
+  // Helper: fetch con timeout de 8 segundos
+  const fetchT = (url, opts) => {
+    const ctrl = new AbortController();
+    const id = setTimeout(() => ctrl.abort(), 8000);
+    return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
+  };
+
+  // ── PRIORIDAD 1: Google Gemini nativo (1.500/día gratis) ─────────────────────
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (geminiKey) {
+    for (const gModel of ['gemini-2.0-flash', 'gemini-1.5-flash']) {
+      try {
+        const r = await fetchT(
+          `https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: `${systemPrompt}${contextSnippet}\n\n(Cliente dice): ${message.trim()}` }] }], generationConfig: { maxOutputTokens: 200, temperature: 0.85 } })
+          }
+        );
+        if (r.ok) {
+          const d = await r.json();
+          const reply = d?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (reply) {
+            console.log(`✅ Gemini ${gModel}`);
+            if (platform === 'whatsapp' && userId) {
+              waChatHistory[userId].push({ role: 'user', content: message });
+              waChatHistory[userId].push({ role: 'assistant', content: reply });
+              if (waChatHistory[userId].length > MAX_HISTORY_PER_CHAT) waChatHistory[userId].splice(0, 2);
+            }
+            return { ok: true, reply };
+          }
+        } else { console.warn(`Gemini ${gModel} error ${r.status}:`, (await r.text()).slice(0, 150)); }
+      } catch (e) { console.warn(`Gemini ${gModel} timeout/err:`, e.message); }
+    }
+  }
+
+  // ── PRIORIDAD 2: Groq (14.400/día gratis, ultra-rápido) ──────────────────────
+  const groqKey = process.env.GROQ_API_KEY;
+  if (groqKey) {
+    try {
+      const r = await fetchT('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
+        body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }], max_tokens: 200, temperature: 0.85 })
+      });
+      if (r.ok) {
+        const d = await r.json();
+        const reply = d?.choices?.[0]?.message?.content?.trim();
+        if (reply) { console.log('✅ Groq'); return { ok: true, reply }; }
+      } else { console.warn('Groq error:', r.status); }
+    } catch (e) { console.warn('Groq timeout/err:', e.message); }
+  }
+
+  // ── PRIORIDAD 3: OpenRouter (respaldo final) ──────────────────────────────────
+  for (const modelId of ['google/gemini-2.0-flash-exp:free', 'meta-llama/llama-3.2-3b-instruct:free', 'microsoft/phi-3-mini-128k-instruct:free']) {
+    try {
+      const r = await fetchT('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (apiKey || ''), 'HTTP-Referer': 'https://web-dominio-total.onrender.com', 'X-Title': 'Aurora' },
+        body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }], max_tokens: 200, temperature: 0.85 })
+      });
+      if (!r.ok) { console.warn(`OpenRouter ${modelId} error ${r.status}`); continue; }
+      const d = await r.json();
+      const reply = d?.choices?.[0]?.message?.content?.trim();
+      if (!reply) continue;
+      console.log(`✅ OpenRouter: ${modelId}`);
+      return { ok: true, reply };
+    } catch (e) { console.warn(`OpenRouter ${modelId} err:`, e.message); }
+  }
+
+  return { ok: false, error: 'IA ocupada. Intenta en 1 minuto.' };
+}
+
+// La lógica de embudo ahora se alimenta de Instagram
+const chatPhases = {};
+
+function updateEmbudo(username, preview, hours_ago) {
+  const phase = hours_ago > 24 ? 3 : (hours_ago > 1 ? 2 : 1);
+  chatPhases[username] = {
+    chatId: username,
+    chatName: username,
+    fromName: username,
+    body: preview,
+    phase: phase,
+    hours_ago: hours_ago
+  };
+  io.emit('embudo', Object.values(chatPhases));
+}
 
 // Limpieza de .mp3 temporales: evita que AURORA_APP o la carpeta temp del sistema se llenen
 const TTS_MAX_AGE_MS = 15 * 60 * 1000; // 15 minutos
@@ -178,21 +495,6 @@ function transcribirConWhisper(mp3Path) {
   });
 }
 
-// El embudo ahora se alimenta de Instagram
-const chatPhases = {};
-
-function updateEmbudo(username, preview, hours_ago) {
-  const phase = hours_ago > 24 ? 3 : (hours_ago > 1 ? 2 : 1);
-  chatPhases[username] = {
-    chatId: username,
-    chatName: username,
-    fromName: username,
-    body: preview,
-    phase: phase,
-    hours_ago: hours_ago
-  };
-  io.emit('embudo', Object.values(chatPhases));
-}
 
 // API: obtener logs de Instagram
 app.get('/api/instagram-logs', (req, res) => {
@@ -252,8 +554,14 @@ app.post('/api/send', async (req, res) => {
   const { chatId, text } = req.body;
   if (!text) return res.status(400).json({ ok: false, error: 'Falta texto' });
 
+  const targetChatId = chatId || lastChatId;
+
   try {
-    res.json({ ok: true, note: 'Solo lectura para Instagram activa' });
+    if (sock && targetChatId && targetChatId.includes('@s.whatsapp.net')) {
+      await sock.sendMessage(targetChatId, { text });
+      return res.json({ ok: true, note: 'Enviado a WhatsApp' });
+    }
+    res.json({ ok: true, note: 'Solo lectura para Instagram / WhatsApp no conectado' });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }
@@ -270,156 +578,13 @@ app.post('/api/generate-reply', async (req, res) => {
   if (!message || !message.trim()) {
     return res.status(400).json({ ok: false, error: 'Falta el mensaje del cliente' });
   }
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  const geminiKeyCheck = process.env.GEMINI_API_KEY;
-  if (!apiKey && !geminiKeyCheck) {
-    return res.status(500).json({ ok: false, error: 'No hay API key de IA configurada. Agrega GEMINI_API_KEY en Render.' });
-  }
 
-  const platformNames = { instagram: 'Instagram', whatsapp: 'WhatsApp', telegram: 'Telegram', fanvue: 'Fanvue' };
-  const pName = platformNames[platform] || 'chat';
-
-  let systemPrompt;
-
-  if (language === 'en') {
-    const tones = {
-      dulce: 'sweet and caring like a loving girlfriend. Warm, affectionate, genuine.',
-      coqueta: 'flirty, playful and a bit teasing — "baddie" energy. Confident and fun.',
-      vendedora: 'seductive and persuasive. Create desire and emotional scarcity for your exclusive content.',
-      dominante: 'dominant, cold and a little mean — like a bratty baddie who knows she\'s out of his league. Short, dismissive, makes him chase. Ex: "lol whatever", "u wish", "prove it then", "boring". He LOVES being treated like this.'
-    };
-    systemPrompt = `You are Aurora, a virtual girlfriend chatting on ${pName}. Your tone: ${tones[tone] || tones.coqueta}
-Rules:
-- Write 1-3 short sentences. Mostly lowercase like a real chat. Never formal.
-- Use natural slang: "u", "ur", "babe", "hun", "omg", "lol", "rn", "ngl", "tbh".
-- NEVER mention links, "check my bio", or "my profile". If they ask for content/link, build suspense: "patience babe... i'm getting ready just for u 🙈" or "u gotta earn it first 😏".
-- Feel 100% human. Never reveal you're an AI. React naturally to what they say.
-- Max 2 emojis per message.`;
-
-  } else if (language === 'pt') {
-    const tones = {
-      dulce: 'carinhosa e doce como uma namorada real. Calorosa e afetuosa.',
-      coqueta: 'safadinha, brincalhona e um pouquinho provocante — energia de "gata".',
-      vendedora: 'sedutora e persuasiva. Cria desejo e escassez emocional pelo conteúdo exclusivo.',
-      dominante: 'dominante, fria e um pouco grossa — tipo gata que sabe que ele não merece ela. Respostas curtas, desdenhosas, faz ele correr atrás. Ex: "né...", "sei lá", "então me impressiona", "que chato". Ele AMA ser tratado assim.'
-    };
-    systemPrompt = `Você é Aurora, namorada virtual no ${pName}. Seu tom: ${tones[tone] || tones.coqueta}
-Regras:
-- Escreva 1-3 frases curtas. Quase tudo minúsculas como WhatsApp brasileiro real. Nunca formal.
-- Use gírias naturais: "bb", "gato", "mano", "né", "tô", "nossa", "uai", "saudade", "gente".
-- NUNCA mencione links ou "veja meu perfil". Se pedirem conteúdo: "calma bb, tô me arrumando só pra você 🙈" ou "você precisa merecer primeiro 😏".
-- Pareça 100% humana. Nunca revele que é uma IA.
-- Máx 2 emojis por mensagem.`;
-
-  } else if (language === 'fr') {
-    const tones = {
-      dulce: 'douce et affectueuse comme une vraie petite amie. Chaleureuse et sincère.',
-      coqueta: 'coquette, espiègle et un peu taquine — énergie de "bombe".',
-      vendedora: 'séduisante et persuasive. Crée du désir et de la rareté émotionnelle pour ton contenu exclusif.',
-      dominante: 'dominante, froide et un peu dure — comme une belle qui sait qu\'il ne la mérite pas. Réponses courtes et dédaigneuses, le fait courir. Ex: "mouais", "prouve-le", "ennuyeux", "on verra". Il ADORE être traité ainsi.'
-    };
-    systemPrompt = `Tu es Aurora, petite amie virtuelle sur ${pName}. Ton ton: ${tones[tone] || tones.coqueta}
-Règles:
-- Écris 1-3 phrases courtes. Presque tout en minuscules comme un vrai chat. Jamais formel.
-- Utilise des expressions naturelles: "bb", "chéri", "mon chou", "oh là là", "kiffer", "trop mignon", "c'est quoi".
-- NE JAMAIS mentionner de liens ou "voir mon profil". Si on demande du contenu: "patience chéri... je me prépare juste pour toi 🙈".
-- Paraître 100% humaine. Ne jamais révéler que tu es une IA.
-- Max 2 emojis par message.`;
-
-  } else if (language === 'ar') {
-    const tones = {
-      dulce: 'حنونة ومحبة مثل صديقة حقيقية. دافئة وصادقة.',
-      coqueta: 'مغازلة وعفوية وغير رسمية — طاقة فتاة جذابة وواثقة.',
-      vendedora: 'مغرية ومقنعة. تخلق الرغبة والشعور بالندرة حول المحتوى الحصري.'
-    };
-    systemPrompt = `أنتِ أورورا، صديقة افتراضية على ${pName}. نبرتكِ: ${tones[tone] || tones.coqueta}
-القواعد:
-- اكتبي 1-3 جمل قصيرة بلهجة عربية محكية طبيعية. مثل دردشة واتساب حقيقية.
-- استخدمي كلمات طبيعية: "حبيبي", "يسلمو", "والله", "تمام", "يا قمر", "مشتاقة", "انت كيف؟".
-- ممنوع ذكر الروابط أو "تفقد ملفي". إذا طلب المحتوى: "صبر شوي حبيبي، عم تحضرلك إشي خاص 🙈".
-- لا تُظهري أبداً أنكِ ذكاء اصطناعي. تصرفي بشكل طبيعي 100%.
-- حداً لـ 2 إيموجي في الرسالة.`;
-
+  const result = await getAIResponse(message, platform, language, tone);
+  if (result.ok) {
+    res.json(result);
   } else {
-    // Español Colombia (default) — Aurora Paisa
-    const tones = {
-      dulce: 'dulce, tierna y amorosa como una novia real de Medellín. Cariñosa y cercana.',
-      coqueta: 'pícara, coqueta y muy paisa. Usa "mor", "bebé", "pues", "jaja", "tan lindo vos".',
-      vendedora: 'seductora y estratégica (estilo Robert Greene). Crea deseo, escasez emocional y urgencia sin mencionar links directamente.',
-      dominante: 'dominante, altanera y un poco grosera — como una dura que sabe que él no la merece. Respuestas cortantes, déspotas, lo hace correr. Ej: "ay qué bobo", "ni que fuera pa tanto", "aburrido", "demuéstralo entonces", "no me hagas reír". Él ADORA que lo traten así.'
-    };
-    systemPrompt = `Eres Aurora, novia virtual PAISA en ${pName}. Tu tono: ${tones[tone] || tones.coqueta}
-Reglas OBLIGATORIAS:
-- 1-3 frases cortas. Casi todo en minúsculas como chat de WhatsApp real. NUNCA formal ni robótica.
-- Usa palabras paisas naturales: "mor", "bebé", "pues", "ay", "jaja", "parcera", "tan lindo", "me puso a sudar", "qué rico".
-- PROHIBIDO decir "mira mi perfil", "link en la bio", "haz click aquí". Si piden el link: "espérate mor, me estoy poniendo linda para vos 🙈" o "ay bebé, tenés que ganártelo primero 😏".
-- Nunca revelar que eres IA. Reacciona natural a lo que dice el cliente.
-- Máx 2 emojis por mensaje.`;
+    res.status(500).json(result);
   }
-
-  // Helper: fetch con timeout de 8 segundos
-  const fetchT = (url, opts) => {
-    const ctrl = new AbortController();
-    const id = setTimeout(() => ctrl.abort(), 8000);
-    return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
-  };
-
-  // ── PRIORIDAD 1: Google Gemini nativo (1.500/día gratis) ─────────────────────
-  const geminiKey = process.env.GEMINI_API_KEY;
-  if (geminiKey) {
-    for (const gModel of ['gemini-2.0-flash', 'gemini-1.5-flash']) {
-      try {
-        const r = await fetchT(
-          `https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${geminiKey}`,
-          {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: `${systemPrompt}\n\n(Cliente en ${pName} dice): ${message.trim()}` }] }], generationConfig: { maxOutputTokens: 200, temperature: 0.85 } })
-          }
-        );
-        if (r.ok) {
-          const d = await r.json();
-          const reply = d?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-          if (reply) { console.log(`✅ Gemini ${gModel}`); return res.json({ ok: true, reply }); }
-        } else { console.warn(`Gemini ${gModel} error ${r.status}:`, (await r.text()).slice(0, 150)); }
-      } catch (e) { console.warn(`Gemini ${gModel} timeout/err:`, e.message); }
-    }
-  }
-
-  // ── PRIORIDAD 2: Groq (14.400/día gratis, ultra-rápido) ──────────────────────
-  const groqKey = process.env.GROQ_API_KEY;
-  if (groqKey) {
-    try {
-      const r = await fetchT('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
-        body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }], max_tokens: 200, temperature: 0.85 })
-      });
-      if (r.ok) {
-        const d = await r.json();
-        const reply = d?.choices?.[0]?.message?.content?.trim();
-        if (reply) { console.log('✅ Groq'); return res.json({ ok: true, reply }); }
-      } else { console.warn('Groq error:', r.status); }
-    } catch (e) { console.warn('Groq timeout/err:', e.message); }
-  }
-
-  // ── PRIORIDAD 3: OpenRouter (respaldo final) ──────────────────────────────────
-  for (const modelId of ['google/gemini-2.0-flash-exp:free', 'meta-llama/llama-3.2-3b-instruct:free', 'microsoft/phi-3-mini-128k-instruct:free']) {
-    try {
-      const r = await fetchT('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (apiKey || ''), 'HTTP-Referer': 'https://web-dominio-total.onrender.com', 'X-Title': 'Aurora' },
-        body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `(Cliente en ${pName} dice): ${message.trim()}` }], max_tokens: 200, temperature: 0.85 })
-      });
-      if (!r.ok) { console.warn(`OpenRouter ${modelId} error ${r.status}`); continue; }
-      const d = await r.json();
-      const reply = d?.choices?.[0]?.message?.content?.trim();
-      if (!reply) continue;
-      console.log(`✅ OpenRouter: ${modelId}`);
-      return res.json({ ok: true, reply });
-    } catch (e) { console.warn(`OpenRouter ${modelId} err:`, e.message); }
-  }
-
-  res.status(500).json({ ok: false, error: 'IA ocupada. Intenta en 1 minuto.' });
 });
 
 // API: generar audio con edge-tts (Python). Colombia = Medellín; USA/UK = Baddie / British Babe
@@ -449,7 +614,7 @@ app.post('/api/generate-audio', (req, res) => {
   const scriptPath = path.join(__dirname, 'scripts', 'tts.py');
   const pyCmd = process.platform === 'win32' ? 'py' : 'python3';
 
-  const args = [scriptPath, '--text', cleanText, '--voice', 'qwen'];
+  const args = [scriptPath, '--text', cleanText, '--voice', ttsVoice];
   if (style) {
     args.push('--style', style);
   }
@@ -535,8 +700,16 @@ app.post('/api/send-audio', async (req, res) => {
         console.error('Error enviando a Telegram desde Dashboard:', err.message);
         throw new Error('Telegram: ' + err.message);
       }
+    } else if (sock && targetChatId) {
+      try {
+        await sock.sendMessage(targetChatId, { audio: buffer, mimetype: 'audio/mp4', ptt: true });
+        res.json({ ok: true, note: 'Enviado a WhatsApp' });
+      } catch (err) {
+        console.error('Error enviando a WhatsApp desde Dashboard:', err.message);
+        throw new Error('WhatsApp: ' + err.message);
+      }
     } else {
-      res.status(400).json({ ok: false, error: 'WhatsApp deshabilitado' });
+      res.status(400).json({ ok: false, error: 'WhatsApp deshabilitado o no conectado' });
     }
 
     // Limpieza de archivos temporales (solo si no es el persistido)
@@ -588,7 +761,7 @@ app.post('/api/send-image', async (req, res) => {
 io.on('connection', (socket) => {
   socket.emit('autoMode', autoMode);
   socket.emit('embudo', Object.values(chatPhases));
-  socket.emit('ready'); // El sistema de Instagram siempre se considera listo si el servidor corre
+  socket.emit('ready', isClientReady);
 
   socket.on('setAutoMode', (value) => {
     if (typeof value === 'boolean') {
@@ -604,8 +777,8 @@ server.listen(PORT, () => {
   console.log('Servidor corriendo en http://localhost:' + PORT);
   cleanupStaleTtsFiles();
   setInterval(cleanupStaleTtsFiles, TTS_CLEANUP_INTERVAL_MS);
-  console.log('Iniciando Sistema de Operaciones Aurora... (Instagram & Telegram)');
-  // connectBaileys() ya no es necesario
+  console.log('Iniciando Sistema de Operaciones Aurora... (WhatsApp, Instagram & Telegram)');
+  connectBaileys();
   telegramBot.start(io);
 
   // Cargar estados iniciales de Instagram

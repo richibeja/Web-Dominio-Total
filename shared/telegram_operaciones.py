@@ -103,15 +103,16 @@ def send_instagram_dm_to_telegram(username: str, message_text: str) -> bool:
             translation = translate_to_spanish(text_to_send)
             if translation:
                 text_to_send = (
-                    f"📸 INSTAGRAM: [{username}] Mensaje Original: [{message_text}]\n"
+                    f"📸 INSTAGRAM_DM: [{username}]\n"
+                    f"Mensaje Original: [{message_text}]\n"
                     f"Traducción: [{translation}]\n-------------------------"
                 )
                 save_client_language(username, detected)
                 logger.info(f"🌐 Idioma detectado para @{username}: {detected}, traducción incluida.")
             else:
-                text_to_send = f"📸 INSTAGRAM: [{username}] Mensaje: [{message_text}]\n-------------------------"
+                text_to_send = f"📸 INSTAGRAM_DM: [{username}]\nMensaje: [{message_text}]\n-------------------------"
         else:
-            text_to_send = f"📸 INSTAGRAM: [{username}] Mensaje: [{message_text}]\n-------------------------"
+            text_to_send = f"📸 INSTAGRAM_DM: [{username}]\nMensaje: [{message_text}]\n-------------------------"
     except Exception as e:
         logger.warning(f"Traducción para Operaciones falló: {e}, enviando mensaje original.")
         text_to_send = f"📸 INSTAGRAM: [{username}] Mensaje: [{message_text}]\n-------------------------"
@@ -130,7 +131,12 @@ def send_instagram_dm_to_telegram(username: str, message_text: str) -> bool:
                 logger.info(f"✅ DM de Instagram enviado a Telegram Operaciones: @{username}")
                 return True
     except Exception as e:
-        logger.warning(f"Error enviando DM a Telegram Operaciones: {e}")
+        # Si el bot fue expulsado del grupo, capturamos el error para que NO CRASHEE
+        if "kicked" in str(e) or "Forbidden" in str(e):
+            logger.error(f"⚠️ EL BOT FUE EXPULSADO DEL GRUPO DE OPERACIONES. Revisa TELEGRAM_OPERACIONES_ID.")
+        else:
+            logger.warning(f"Error enviando DM a Telegram Operaciones: {e}")
+    return False
     return False
 
 
@@ -211,11 +217,12 @@ def consume_next_reply() -> Optional[dict]:
 def parse_instagram_username_from_telegram_message(text: str) -> Optional[str]:
     """
     Parsea el username del mensaje que enviamos al grupo.
-    Formato: 📸 INSTAGRAM: [Username] Mensaje: ...
+    Formato: 📸 INSTAGRAM_DM: [Username] Mensaje: ... o 📸 INSTAGRAM_COMMENT: [Username] ...
     """
-    if not text or "INSTAGRAM:" not in text:
+    if not text or "INSTAGRAM_" not in text:
         return None
-    m = re.search(r"INSTAGRAM:\s*\[([^\]]+)\]\s*Mensaje:", text, re.IGNORECASE | re.DOTALL)
+    # Busca el contenido dentro de los primeros corchetes [] después de INSTAGRAM_
+    m = re.search(r"INSTAGRAM_(?:DM|COMMENT):\s*\[([^\]]+)\]", text, re.IGNORECASE)
     if m:
         return m.group(1).strip()
     return None

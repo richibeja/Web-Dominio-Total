@@ -73,8 +73,40 @@ Debes publicar **3 veces al día** para mantenerlos adictos.
 
 ---
 
-## 🤖 USANDO LA IA EN TELEGRAM
-Si no sabes qué escribir, ve al **Dashboard** -> Pestaña **COPILOTO**.
-1.  Elige **Plataforma: Telegram 💙**.
-2.  Escribe en la caja: *"Dame un mensaje de buenos días"* o *"Vende el ebook"*.
-3.  Copia y pega el texto que te dé la IA.
+---
+
+## 🚀 5. MARKETING DE LANZAMIENTO "EXTREMO" (Podcast Prohibido)
+Como Aurora es la **Líder** del grupo, los lanzamientos deben ser audaces y mostrar su autoridad sobre sus amigas.
+
+### 🎥 SCRIPT PARA VIDEO "AURORA LÍDER" (Usa tu imagen/avatar)
+*Usa este texto para un video corto o historia de Telegram:*
+
+> "Muchos creen que me conocen... pero ni se imaginan lo que pasa cuando mis amigas y yo nos quedamos solas. Hoy en el **Podcast Prohibido**, he sentado a mi amiga Sofía frente al micrófono. Le he obligado a confesar su secreto más oscuro... su primera vez por la puerta de atrás. 😈 No se imaginan la cara que puso cuando le hice las preguntas que USTEDES querían saber. Si quieren escuchar la confesión completa de Sofía y mi reacción... el link está abajo. No apto para cardíacos."
+
+### 🔗 ESTRATEGIA DE "EL GANCHO EXTREMO"
+1.  **Fase 1 (Intriga):** Sube una foto de Aurora con un texto: *"Hoy mi lengua está muy suelta... y la de mi amiga Sofía también."*
+2.  **Fase 2 (El Audio Tease):** Sube el audio de 30 segundos generado en el **Audio Studio** donde Aurora presenta a Sofía.
+3.  **Fase 3 (Venta Hardcore):** Sube una foto de ambas (o una tuya sugiriendo que estás con alguien) con el link directo a Fanvue: *"Solo para mis reyes valientes. Escucha a Sofía confesar todo aquí 👇"*
+
+---
+
+## 🤖 USANDO LA IA EN TELEGRAM (NUEVO: AUDIO STUDIO)
+Si no sabes qué escribir o quieres generar audios potentes:
+
+### 🅰️ RESPUESTAS DE TEXTO (Copiloto)
+1. Ve al **Dashboard** -> **Asistente de Respuestas**.
+2. Elige **Plataforma: Telegram**.
+3. Escribe el mensaje del cliente y pulsa **Generar**.
+
+### 🅱️ AUDIOS ERÓTICOS (Audio Studio) - 🔥 LO QUE MÁS VENDE
+1. Ve al **Dashboard** -> **Audio Studio**.
+2. Selecciona la voz (Ej: **México Neutro** para un toque profesional o **Medellín** para algo más dulce).
+3. Pulsa **💡 Ver Ideas** para inspirarte con las situaciones del "Podcast Prohibido".
+4. Escribe el guion o usa una idea, pulsa **Generar y Escuchar**.
+5. Si te gusta, pulsa **✈️ Enviar a Telegram**.
+
+---
+
+## 📜 RECURSOS ADICIONALES
+- [Listado Completo de Situaciones Podcast](./SITUACIONES_PODCAST.md)
+- [Estrategia Maestra de Ventas](./marketing_angles_ebook.md)

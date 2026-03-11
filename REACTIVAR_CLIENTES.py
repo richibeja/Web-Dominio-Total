@@ -26,10 +26,10 @@ GUION_REACTIVACION = random.choice(GUIONES_REACTIVACION)
 AUDIO_FILE = "reactivacion_clientes.mp3"
 
 async def generar_audio_reactivacion():
-    print(f"🎙️ Generando nota de voz de reactivación con la voz {VOICE}...")
+    print(f"AURORA: Generando nota de voz de reactivacion con la voz {VOICE}...")
     communicate = edge_tts.Communicate(GUION_REACTIVACION, VOICE, rate="+5%")
     await communicate.save(AUDIO_FILE)
-    print(f"✅ Audio generado: {AUDIO_FILE}")
+    print(f"Listo: Audio generado: {AUDIO_FILE}")
 
 def obtener_clientes():
     """Obtiene clientes únicos de bot_memory.json y nuevos_clientes.json"""
@@ -80,7 +80,7 @@ def enviar_reactivacion():
         print("❌ No se encontraron clientes para reactivar.")
         return
 
-    print(f"🚀 Iniciando reactivación para {len(clientes)} clientes...")
+    print(f"AURORA: Iniciando reactivacion para {len(clientes)} clientes...")
     
     success = 0
     errors = 0
@@ -97,9 +97,9 @@ def enviar_reactivacion():
             url = f"https://api.telegram.org/bot{TOKEN}/sendVoice"
             with open(AUDIO_FILE, "rb") as audio:
                 captions_reac = [
-                    f"te extrao mor 🥰 no te me pierdas... ahí te espero\n{LINK_VIP}\n\nO si quieres charlar un ratico conmigo, llámame tocando aquí 📞👇\nhttps://utopiafinca.netlify.app/aurora-llamada.html",
-                    f"pensé en vos hoy y tuve que mandarte esto ❤️\n{LINK_VIP}\n\n¿Tienes 1 minutico? Llámame por acá, me encantaría escucharte 📞👇\nhttps://utopiafinca.netlify.app/aurora-llamada.html",
-                    f"ya tenís rato sin venir a verme... vuelve bebé 💋\n{LINK_VIP}\n\nSi prefieres podemos hablar por teléfono un ratico, toca aquí y llámame 📞👇\nhttps://utopiafinca.netlify.app/aurora-llamada.html",
+                    f"te extrao mor 🥰 no te me pierdas... ahí te espero\n{LINK_VIP}\n\nO si quieres charlar un ratico conmigo, llámame tocando aquí 📞👇\nhttps://web-dominio-total-4iw4.vercel.app/aurora-llamada.html",
+                    f"pensé en vos hoy y tuve que mandarte esto ❤️\n{LINK_VIP}\n\n¿Tienes 1 minutico? Llámame por acá, me encantaría escucharte 📞👇\nhttps://web-dominio-total-4iw4.vercel.app/aurora-llamada.html",
+                    f"ya tenís rato sin venir a verme... vuelve bebé 💋\n{LINK_VIP}\n\nSi prefieres podemos hablar por teléfono un ratico, toca aquí y llámame 📞👇\nhttps://web-dominio-total-4iw4.vercel.app/aurora-llamada.html",
                 ]
                 caption = random.choice(captions_reac)
                 resp = requests.post(url, data={

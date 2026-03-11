@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Reglas para clubs
+    match /clubs/{clubId} {
+      allow read, write: if request.auth != null;
+      
+      // Miembros del club
+      match /members/{memberId} {
+        allow read, write: if request.auth != null && 
+          (request.auth.uid == memberId || 
+           resource.data.adminIds.contains(request.auth.uid));
+      }
+      
+      // Tickets del club
+      match /tickets/{ticketId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && 
+          (request.auth.uid == resource.data.userId || 
+           resource.data.clubAdmins.contains(request.auth.uid));
+      }
+      
+      // Invitaciones del club
+      match /invitations/{invitationId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+    
+    // Reglas para usuarios
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Reglas para suscripciones
+    match /subscriptions/{subscriptionId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+    }
+    
+    // Reglas para predicciones
+    match /predictions/{predictionId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+}

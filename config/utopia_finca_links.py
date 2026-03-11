@@ -13,11 +13,11 @@ LINKS = {
     "sales_page": "https://web-dominio-total.vercel.app",
 
     # 2. Comunidad VIP (Telegram) - Donde viven los fans
-    "telegram": "https://t.me/LuzDeAuroraOficial",
-    "telegram_bot": "@LuzDeAuroraOficial",
+    "telegram": "https://t.me/+QuX6mkbTG7A3Y2Fh",
+    "telegram_bot": "@utopiafincabot",
 
     # 3. Checkout HOTMART (Ebook $7) - Venta rápida
-    "ebook_payment": "https://pay.hotmart.com/E104450083T",
+    "ebook_payment": "https://web-dominio-total.vercel.app",
     
     # 4. Suscripción Mensual (Fanvue) - Venta recurrente
     "fanvue": "https://www.fanvue.com/utopiafinca",

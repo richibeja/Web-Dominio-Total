@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurora 💋 | Mi WhatsApp Privado</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --wa-green: #25D366;
+            --wa-dark: #075E54;
+            --accent: #ff4757;
+            --bg-dark: #0A0A0A;
+            --text-main: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255, 71, 87, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(37, 211, 102, 0.05) 0%, transparent 50%);
+        }
+
+        .container {
+            max-width: 450px;
+            width: 90%;
+            padding: 40px 20px;
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .avatar-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 25px;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid var(--accent);
+            padding: 5px;
+            object-fit: cover;
+            box-shadow: 0 0 20px rgba(255, 71, 87, 0.3);
+        }
+
+        .status-dot {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            background: var(--wa-green);
+            border-radius: 50%;
+            border: 3px solid var(--bg-dark);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #fff, var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #aaa;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .btn-whatsapp {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: linear-gradient(135deg, var(--wa-green), #128C7E);
+            color: white;
+            text-decoration: none;
+            padding: 18px 30px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            box-shadow: 0 10px 30px rgba(37, 211, 102, 0.3);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-whatsapp:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(37, 211, 102, 0.5);
+        }
+
+        .wa-icon {
+            width: 28px;
+            height: 28px;
+            fill: white;
+        }
+
+        .security-note {
+            margin-top: 30px;
+            font-size: 0.8rem;
+            color: #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .emoji-float {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.1;
+            z-index: -1;
+            animation: float 10s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(100px, 100px) rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Decoración flotante -->
+    <div class="emoji-float" style="top: 10%; left: 10%;">💋</div>
+    <div class="emoji-float" style="top: 70%; left: 80%; animation-delay: -5s;">🔥</div>
+    <div class="emoji-float" style="top: 40%; left: 85%; animation-delay: -2s;">💬</div>
+
+    <div class="container">
+        <div class="avatar-container">
+            <img src="https://i.ibb.co/vzKjL0m/aurora-avatar.png" alt="Aurora" class="avatar" onerror="this.src='https://via.placeholder.com/150/ff4757/ffffff?text=Aurora'">
+            <div class="status-dot"></div>
+        </div>
+
+        <h1>¡Hablemos por aquí, bebé! 💋</h1>
+        <p>
+            En Instagram me borran todo... 🙄<br>
+            Ven a mi WhatsApp donde podemos hablar sin censura y te paso mis regalitos ricas. 😏
+        </p>
+
+        <!-- REEMPLAZAR EL LINK ABAJO CON TU WHATSAPP REAL -->
+        <!-- Ejemplo: https://wa.me/573000000000?text=Hola%20Aurora,%20vengo%20de%20Instagram -->
+        <a href="https://wa.me/573213349045?text=Hola%20Aurora%20preciosa,%20vengo%20de%20Instagram%20y%20quiero%20conocerte%20mejor%20%F0%9F%98%8D" class="btn-whatsapp">
+            <svg class="wa-icon" viewBox="0 0 24 24">
+                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.246 2.248 3.484 5.232 3.484 8.412-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.309 1.656zm6.222-4.032c1.551.921 3.264 1.408 5.011 1.409 5.454.002 9.896-4.441 9.899-9.896.001-2.646-1.03-5.132-2.903-7.004C16.425 2.59 13.937 1.558 11.29 1.558c-5.454 0-9.897 4.441-9.899 9.897-.001 1.905.541 3.765 1.564 5.378l-1.032 3.76 3.856-1.011zm11.282-7.551c-.26-.13-.1.543-1.543-.1.72-.259.06-.543.13-.72.07-.179.03-.326-.065-.418-.095-.092-.765-.845-.331-1.487.322-.09.6-.134.782-.134.182 0 .364.043.52.13.156.088 1.05 1.728 1.205 1.838.156.11.259.13.433.13.174 0 .364-.044.522-.13.154-.087 1.05-1.728 1.205-1.838.156-.11.259-.131.432-.131s.365.044.521.131c.156.088 1.05 1.728 1.205 1.838.156.11.259.131.433.131.173 0 .364-.044.521-.131.156-.088 1.05-1.728 1.205-1.838.156-.11.259-.131.433-.131.173 0 .364.044.521.131.156.088.13.13.3.13.174 0 .434-.044.608-.131s2.822-1.37 2.822-1.37.174-.087.346-.087c.174 0 .434.044.608.131.174.088.261.218.261.348v.087c-.087.608-.348 1.217-.74 1.739-.391.522-.957.957-1.609 1.261-.652.304-1.348.478-2.087.478-.739 0-1.478-.174-2.174-.522-.696-.348-1.261-.826-1.696-1.435-.435-.611-.741-1.305-.913-2.043-.174-.739-.217-1.522-.13-2.304.087-.739.304-1.435.652-2.043.348-.609.783-1.13.13-1.522.652-.391 1.348-.652 2.043-.74.696-.087 1.391-.043 2.043.13s1.261.435 1.782.826.913.826 1.13 1.304c.217.478.304 1.043.261 1.652-.043.609-.217 1.217-.522 1.739s-.696.957-1.174 1.261c-.478.304-1.043.478-1.652.522-.609.043-1.217-.043-1.739-.261s-.957-.522-1.261-1.043c-.304-.522-.478-1.087-.522-1.739z"/>
+            </svg>
+            CHATEAR CON AURORA
+        </a>
+
+        <div class="security-note">
+            🛡️ Canal verificado y seguro
+        </div>
+    </div>
+
+    <script>
+        // Efecto de movimiento sutil al fondo
+        document.body.addEventListener('mousemove', (e) => {
+            const moveX = (e.clientX - window.innerWidth / 2) * 0.01;
+            const moveY = (e.clientY - window.innerHeight / 2) * 0.01;
+            document.querySelector('.container').style.transform = `translate(${moveX}px, ${moveY}px)`;
+        });
+    </script>
+</body>
+
+</html>

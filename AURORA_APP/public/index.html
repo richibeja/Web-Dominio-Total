@@ -64,6 +64,15 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #475569;
     }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #10b981;
+      border-radius: 10px;
+    }
   </style>
 </head>
 
@@ -79,285 +88,389 @@
       <p class="text-slate-500 mt-2 font-light tracking-wide">Elite Operations Center (Instagram & Telegram)</p>
     </header>
 
-    <!-- Estado del Sistema -->
-    <section class="rounded-2xl bg-slate-800/60 border border-slate-700/50 p-4 mb-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <span class="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
-          <span class="font-medium">🌐 Sistema Activo — Render 24/7</span>
+    <!-- 🛰️ CONECTIVIDAD (WhatsApp & Services) -->
+    <section id="waSection"
+      class="rounded-2xl bg-slate-800/60 border border-slate-700/30 p-8 mb-8 shadow-2xl overflow-hidden relative">
+      <div id="waReadyStatus" class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-2xl font-bold text-white tracking-tight">📲 WhatsApp Mirror</h2>
+          <p id="waStatusText" class="text-slate-400 text-xs mt-1">Esperando conexión...</p>
         </div>
-        <div class="flex items-center gap-3">
-          <span class="text-slate-300 text-sm font-medium">Modo Automático (IA)</span>
-          <button id="autoModeToggle" type="button" role="switch" aria-checked="false"
-            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-600 transition-colors focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:ring-offset-slate-800">
-            <span id="autoModeThumb"
-              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition translate-x-0.5"></span>
-          </button>
+        <div id="waBadge"
+          class="px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-[10px] font-bold tracking-widest uppercase">
+          Desconectado
+        </div>
+      </div>
+
+      <!-- Panel de QR -->
+      <div id="waQrContainer"
+        class="hidden animate-fadeIn flex flex-col items-center justify-center p-6 bg-white rounded-3xl mt-4 mx-auto w-64 shadow-2xl border-4 border-slate-900">
+        <p class="text-slate-900 text-[10px] font-black uppercase tracking-widest mb-4">Escanea para Conectar</p>
+        <img id="waQrImg" class="w-full h-auto" src="" alt="WhatsApp QR">
+      </div>
+
+      <!-- Panel de Éxito -->
+      <div id="waSuccessPanel"
+        class="hidden animate-fadeIn flex items-center gap-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl mt-4">
+        <span class="text-3xl">✅</span>
+        <div>
+          <p class="text-emerald-400 text-sm font-black uppercase tracking-widest">WhatsApp Activo</p>
+          <p class="text-slate-400 text-xs">El espejo a Telegram está funcionando en tiempo real.</p>
         </div>
       </div>
     </section>
 
-
-
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- ASISTENTE DE RESPUESTAS (Copia & Pega IA)  -->
-    <!-- ═══════════════════════════════════════════ -->
-    <section class="rounded-2xl bg-slate-800/60 border border-violet-700/30 p-6 mb-6"
-      style="box-shadow:0 0 30px rgba(139,92,246,0.08)">
-      <div class="flex items-center justify-between mb-5">
-        <h2 class="text-xl font-semibold text-slate-200">💬 Asistente de Respuestas</h2>
+    <!-- 🎙️ AUDIO STUDIO (Podcast & Teasers) -->
+    <section class="rounded-2xl bg-slate-800/60 border border-emerald-700/30 p-8 mb-8 shadow-2xl"
+      style="background: radial-gradient(circle at top right, rgba(16,185,129,0.05), transparent)">
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h2 class="text-2xl font-bold text-white tracking-tight">🎙️ Audio Studio</h2>
+          <p class="text-slate-400 text-xs mt-1">Generación de contenido estelar para el Podcast Prohibido</p>
+        </div>
         <span
-          class="px-2 py-0.5 rounded text-[10px] bg-violet-600/30 text-violet-400 border border-violet-600/50 font-medium tracking-wider">IA
-          · COPIA &amp; PEGA</span>
+          class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold tracking-widest uppercase">
+          Studio Mode Active
+        </span>
       </div>
 
-      <!-- Selectores de plataforma, idioma y tono -->
-      <div class="grid grid-cols-3 gap-3 mb-4">
-        <div class="bg-slate-900/80 border border-slate-700/50 rounded-xl px-3 py-2.5">
-          <span class="text-violet-400 text-[9px] font-bold uppercase tracking-widest block mb-1">📱 Plataforma</span>
-          <select id="replyPlatform"
-            class="w-full bg-transparent text-slate-200 text-sm font-medium focus:outline-none cursor-pointer">
-            <option value="instagram">📸 Instagram</option>
-            <option value="whatsapp">💬 WhatsApp</option>
-            <option value="telegram">✈️ Telegram</option>
-            <option value="fanvue">💜 Fanvue</option>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div
+          class="bg-slate-900/40 border border-slate-700/50 rounded-2xl px-4 py-3 hover:border-emerald-500/30 transition">
+          <span class="text-emerald-400 text-[10px] font-bold uppercase tracking-widest block mb-2">🎙️ Voz /
+            Acento</span>
+          <select id="ttsVoice"
+            class="w-full bg-transparent text-slate-100 text-sm font-semibold focus:outline-none cursor-pointer">
+            <option value="medellin">🇨🇴 Medellín (Salomé)</option>
+            <option value="neutro">🇲🇽 México Neutro (Dalia)</option>
+            <option value="madura">🇲🇽 México Madura (Larissa)</option>
+            <option value="espana">🇪🇸 España (Elvira)</option>
+            <option value="usa">🇺🇸 USA Baddie (Ana)</option>
+            <option value="uk">🇬🇧 UK British Babe (Sonia)</option>
+            <option value="qwen">🤖 Qwen Engine</option>
           </select>
         </div>
-        <div class="bg-slate-900/80 border border-slate-700/50 rounded-xl px-3 py-2.5">
-          <span class="text-violet-400 text-[9px] font-bold uppercase tracking-widest block mb-1">🌍 Idioma</span>
-          <select id="replyLanguage"
-            class="w-full bg-transparent text-slate-200 text-sm font-medium focus:outline-none cursor-pointer">
-            <option value="es-co">🇨🇴 Español</option>
-            <option value="en">🇺🇸 English</option>
-            <option value="pt">🇧🇷 Português</option>
-            <option value="fr">🇫🇷 Français</option>
-            <option value="ar">🇸🇦 العربية</option>
-          </select>
-        </div>
-        <div class="bg-slate-900/80 border border-slate-700/50 rounded-xl px-3 py-2.5">
-          <span class="text-violet-400 text-[9px] font-bold uppercase tracking-widest block mb-1">🎭 Tono</span>
-          <select id="replyTone"
-            class="w-full bg-transparent text-slate-200 text-sm font-medium focus:outline-none cursor-pointer">
-            <option value="coqueta">😘 Coqueta</option>
-            <option value="dulce">🥰 Dulce</option>
-            <option value="vendedora">💰 Vendedora</option>
-            <option value="dominante">😈 Dominante (los trata mal)</option>
+        <div
+          class="bg-slate-900/40 border border-slate-700/50 rounded-2xl px-4 py-3 hover:border-emerald-500/30 transition">
+          <span class="text-emerald-400 text-[10px] font-bold uppercase tracking-widest block mb-2">🎭 Estilo
+            Vocal</span>
+          <select id="ttsStyle"
+            class="w-full bg-transparent text-slate-100 text-sm font-semibold focus:outline-none cursor-pointer">
+            <option value="Default">Natural</option>
+            <option value="Seductora">Sensual / Susurro</option>
+            <option value="Alegre">Juguetona / Alegre</option>
+            <option value="Clon Paisa">Clon Aurora (Premium)</option>
           </select>
         </div>
       </div>
 
-      <!-- Mensaje del cliente -->
-      <div class="mb-3">
-        <label class="text-slate-400 text-xs font-medium block mb-1.5">📥 Pega aquí el mensaje del cliente:</label>
-        <textarea id="replyInput" rows="3" placeholder="Ej: hola bb cómo estás? 😊"
-          class="w-full rounded-xl bg-slate-900/80 border border-slate-600 text-slate-100 placeholder-slate-500 px-4 py-3 resize-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 outline-none transition"></textarea>
+      <div class="mb-6">
+        <div class="flex justify-between items-center mb-2 px-1">
+          <label class="text-slate-400 text-xs font-semibold uppercase tracking-wider">📜 Guion del Podcast /
+            Teaser:</label>
+          <button id="showIdeas"
+            class="text-emerald-400 text-xs hover:text-emerald-300 font-bold flex items-center gap-1 transition">
+            <span>💡</span> Ver Ideas de Guiones
+          </button>
+        </div>
+        <textarea id="ttsInput" rows="5"
+          placeholder="Escribe aquí lo que Aurora dirá... Ej: 'Hola mi amor, me desperté pensando en ti...'"
+          class="w-full rounded-2xl bg-slate-950/50 border border-slate-700 text-slate-100 placeholder-slate-600 px-5 py-4 resize-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 outline-none transition text-sm leading-relaxed shadow-inner"></textarea>
       </div>
 
-      <!-- Botón generar -->
-      <button id="generateReply"
-        class="w-full px-6 py-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold transition-all transform hover:scale-[1.01] shadow-[0_0_20px_rgba(139,92,246,0.35)] flex items-center justify-center gap-2 mb-4">
-        <span>🤖</span> GENERAR RESPUESTA CON IA
+      <button id="generateAudio"
+        class="w-full px-8 py-5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm tracking-widest uppercase transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-3">
+        <span class="text-xl">🔊</span> GENERAR Y ESCUCHAR AUDIO
       </button>
 
-      <!-- Respuesta generada -->
-      <div id="replyOutputContainer" class="hidden">
-        <label class="text-slate-400 text-xs font-medium block mb-1.5">📤 Respuesta de Aurora — lista para
-          pegar:</label>
-        <div class="relative">
-          <textarea id="replyOutput" rows="3" readonly
-            class="w-full rounded-xl bg-black/50 border border-violet-500/40 text-slate-100 px-4 py-3 pr-28 resize-none outline-none font-medium text-sm leading-relaxed"></textarea>
-          <button id="copyReply"
-            class="absolute bottom-3 right-3 px-4 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold transition-all active:scale-95">
-            📋 Copiar
+      <div id="audioPlayerContainer"
+        class="hidden mt-6 bg-slate-950/40 border border-slate-800 rounded-2xl p-6 animate-fadeIn">
+        <audio id="audioPlayer" controls class="w-full mb-6 filter invert opacity-80"></audio>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button id="sendToTelegram"
+            class="w-full px-6 py-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-sky-900/20 flex items-center justify-center gap-2">
+            <span class="text-lg">✈️</span> Telegram
+          </button>
+          <button id="sendToWhatsApp"
+            class="w-full px-6 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2">
+            <span class="text-lg">💬</span> WhatsApp
           </button>
         </div>
-        <p id="copiedMsg" class="text-emerald-400 text-xs mt-1 hidden text-right font-semibold">✅ ¡Copiado al
-          portapapeles!</p>
       </div>
 
-      <p id="replyError" class="text-rose-400 text-sm hidden mt-2"></p>
+      <p id="ttsError" class="text-rose-400 text-sm hidden mt-4 font-medium px-2"></p>
     </section>
 
-
-
-    <!-- Links Rápidos -->
-    <section class="rounded-2xl bg-slate-800/60 border border-slate-700/50 p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-slate-200">🔗 Links Rápidos</h2>
+    <!-- 📸 IMAGE & VIDEO STUDIO (Prompts Grok) -->
+    <section class="rounded-2xl bg-slate-800/60 border border-yellow-700/30 p-8 mb-8 shadow-2xl"
+      style="background: radial-gradient(circle at top right, rgba(212,175,55,0.05), transparent)">
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h2 class="text-2xl font-bold text-white tracking-tight">📸 Image & Video Studio</h2>
+          <p class="text-slate-400 text-xs mt-1">Generador de Prompts Maestros para Grok Imagine</p>
+        </div>
         <span
-          class="px-2 py-0.5 rounded text-[10px] bg-emerald-600/20 text-emerald-400 border border-emerald-600/30 font-medium tracking-wider">COPIA
-          & PEGA</span>
+          class="px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-[10px] font-bold tracking-widest uppercase">
+          Elite Prompts Active
+        </span>
       </div>
-      <div class="space-y-2" id="linksPanel">
 
-        <!-- Fanvue -->
-        <div class="flex items-center gap-3 bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-700/40">
-          <span class="text-lg">💜</span>
-          <div class="flex-1 min-w-0">
-            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Fanvue</p>
-            <a href="https://www.fanvue.com/utopiafinca" target="_blank"
-              class="text-sm text-violet-400 hover:text-violet-300 truncate block">fanvue.com/utopiafinca</a>
-          </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div
+          class="bg-slate-900/40 border border-slate-700/50 rounded-2xl px-4 py-3 hover:border-yellow-500/30 transition">
+          <span class="text-yellow-400 text-[10px] font-bold uppercase tracking-widest block mb-2">🎬 Escenario</span>
+          <select id="promptScenario"
+            class="w-full bg-transparent text-slate-100 text-sm font-semibold focus:outline-none cursor-pointer">
+            <option value="luxury">💎 Luxury / Bedroom (Misterio)</option>
+            <option value="field">🌿 Campo / Cafetal (Paisa Real)</option>
+            <option value="river">💦 Río / Cascada (ASMR)</option>
+            <option value="night">🌙 Noche / Fiesta (Baddie)</option>
+          </select>
+        </div>
+        <div
+          class="bg-slate-900/40 border border-slate-700/50 rounded-2xl px-4 py-3 hover:border-yellow-500/30 transition">
+          <span class="text-yellow-400 text-[10px] font-bold uppercase tracking-widest block mb-2">📸 Formato</span>
+          <select id="promptFormat"
+            class="w-full bg-transparent text-slate-100 text-sm font-semibold focus:outline-none cursor-pointer">
+            <option value="reels">📱 Reels (9:16)</option>
+            <option value="post">📷 Post (4:5)</option>
+            <option value="video">📽️ Cinematic (16:9)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <label class="text-slate-400 text-xs font-semibold uppercase tracking-wider px-1">✍️ Detalles Extras:</label>
+        <input id="promptExtra" type="text" placeholder="Ej: vestido rojo, con un vaso de vino, lloviendo..."
+          class="w-full mt-2 rounded-2xl bg-slate-950/50 border border-slate-700 text-slate-100 placeholder-slate-600 px-5 py-4 focus:ring-2 focus:ring-yellow-500/30 focus:border-yellow-500/50 outline-none transition text-sm shadow-inner">
+      </div>
+
+      <button id="generatePrompt"
+        class="w-full px-8 py-5 rounded-2xl bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-black font-black text-sm tracking-widest uppercase transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-yellow-900/20 flex items-center justify-center gap-3">
+        <span class="text-xl">✨</span> GENERAR PROMPT MAESTRO
+      </button>
+
+      <div id="promptOutputContainer"
+        class="hidden mt-6 bg-slate-950/40 border border-slate-800 rounded-2xl p-6 animate-fadeIn">
+        <p class="text-yellow-400 text-[10px] font-bold uppercase tracking-widest mb-2">Copia esto en Grok:</p>
+        <div id="promptOutput"
+          class="text-slate-300 text-sm italic font-mono bg-black/40 p-4 rounded-xl border border-slate-800 break-words mb-4">
+        </div>
+        <button onclick="copyRawPrompt()"
+          class="w-full px-6 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2">
+          <span>📋</span> Copiar Prompt
+        </button>
+      </div>
+
+      <!-- Links Rápidos -->
+      <section class="rounded-2xl bg-slate-800/40 border border-slate-700/50 p-6">
+        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-6 px-1">🔗 Accesos Directos</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
           <button onclick="copyLink(this,'https://www.fanvue.com/utopiafinca')"
-            class="px-3 py-1 rounded-lg bg-violet-600/80 hover:bg-violet-500 text-white text-xs font-bold transition active:scale-95 shrink-0">📋
-            Copiar</button>
-        </div>
-
-        <!-- Página de Ventas -->
-        <div class="flex items-center gap-3 bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-700/40">
-          <span class="text-lg">🛒</span>
-          <div class="flex-1 min-w-0">
-            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Página de Ventas (Ebook)</p>
-            <a href="https://web-dominio-total.vercel.app" target="_blank"
-              class="text-sm text-rose-400 hover:text-rose-300 truncate block">web-dominio-total.vercel.app</a>
-          </div>
+            class="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/40 text-center text-xs font-bold hover:border-violet-500 hover:text-violet-400 transition group">
+            <span class="block text-xl mb-1 group-hover:scale-110 transition">💜</span> Fanvue
+          </button>
           <button onclick="copyLink(this,'https://web-dominio-total.vercel.app')"
-            class="px-3 py-1 rounded-lg bg-rose-600/80 hover:bg-rose-500 text-white text-xs font-bold transition active:scale-95 shrink-0">📋
-            Copiar</button>
-        </div>
-
-        <!-- Telegram Comunidad -->
-        <div class="flex items-center gap-3 bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-700/40">
-          <span class="text-lg">✈️</span>
-          <div class="flex-1 min-w-0">
-            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Telegram Comunidad VIP</p>
-            <a href="https://t.me/+QuX6mkbTG7A3Y2Fh" target="_blank"
-              class="text-sm text-sky-400 hover:text-sky-300 truncate block">t.me/+QuX6mkbTG7A3Y2Fh</a>
-          </div>
-          <button onclick="copyLink(this,'https://t.me/+QuX6mkbTG7A3Y2Fh')"
-            class="px-3 py-1 rounded-lg bg-sky-600/80 hover:bg-sky-500 text-white text-xs font-bold transition active:scale-95 shrink-0">📋
-            Copiar</button>
-        </div>
-
-        <!-- Telegram Bot -->
-        <div class="flex items-center gap-3 bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-700/40">
-          <span class="text-lg">🤖</span>
-          <div class="flex-1 min-w-0">
-            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Bot de Telegram (Aurora)</p>
-            <a href="https://t.me/utopiafincabot" target="_blank"
-              class="text-sm text-sky-400 hover:text-sky-300 truncate block">t.me/utopiafincabot</a>
-          </div>
+            class="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/40 text-center text-xs font-bold hover:border-rose-500 hover:text-rose-400 transition group">
+            <span class="block text-xl mb-1 group-hover:scale-110 transition">🛒</span> Ebook
+          </button>
           <button onclick="copyLink(this,'https://t.me/utopiafincabot')"
-            class="px-3 py-1 rounded-lg bg-sky-600/80 hover:bg-sky-500 text-white text-xs font-bold transition active:scale-95 shrink-0">📋
-            Copiar</button>
-        </div>
-
-        <!-- Instagram -->
-        <div class="flex items-center gap-3 bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-700/40">
-          <span class="text-lg">📸</span>
-          <div class="flex-1 min-w-0">
-            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Instagram</p>
-            <a href="https://www.instagram.com/luzdeaurorafeyamor/" target="_blank"
-              class="text-sm text-pink-400 hover:text-pink-300 truncate block">instagram.com/luzdeaurorafeyamor</a>
-          </div>
+            class="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/40 text-center text-xs font-bold hover:border-sky-500 hover:text-sky-400 transition group">
+            <span class="block text-xl mb-1 group-hover:scale-110 transition">🤖</span> Bot
+          </button>
+          <button onclick="copyLink(this,'https://t.me/+QuX6mkbTG7A3Y2Fh')"
+            class="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/40 text-center text-xs font-bold hover:border-blue-500 hover:text-blue-400 transition group">
+            <span class="block text-xl mb-1 group-hover:scale-110 transition">📢</span> Canal VIP
+          </button>
           <button onclick="copyLink(this,'https://www.instagram.com/luzdeaurorafeyamor/')"
-            class="px-3 py-1 rounded-lg bg-pink-600/80 hover:bg-pink-500 text-white text-xs font-bold transition active:scale-95 shrink-0">📋
-            Copiar</button>
+            class="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/40 text-center text-xs font-bold hover:border-pink-500 hover:text-pink-400 transition group">
+            <span class="block text-xl mb-1 group-hover:scale-110 transition">📸</span> Insta
+          </button>
+          <button onclick="copyLink(this,'https://wa.me/573213349045')"
+            class="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/40 text-center text-xs font-bold hover:border-emerald-500 hover:text-emerald-400 transition group">
+            <span class="block text-xl mb-1 group-hover:scale-110 transition">📱</span> WhatsApp
+          </button>
+          <a href="/vapi-call" target="_blank"
+            class="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/40 text-center text-xs font-bold hover:border-pink-600 hover:text-pink-500 transition group">
+            <span class="block text-xl mb-1 group-hover:scale-110 transition">📞</span> Videollamada
+          </a>
         </div>
+      </section>
+  </div>
 
-        <!-- WhatsApp -->
-        <div class="flex items-center gap-3 bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-700/40">
-          <span class="text-lg">💬</span>
-          <div class="flex-1 min-w-0">
-            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">WhatsApp</p>
-            <a href="https://wa.me/573227198007" target="_blank"
-              class="text-sm text-emerald-400 hover:text-emerald-300 truncate block">+57 322 719 8007</a>
-          </div>
-          <button onclick="copyLink(this,'https://wa.me/573227198007')"
-            class="px-3 py-1 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 text-white text-xs font-bold transition active:scale-95 shrink-0">📋
-            Copiar</button>
+  <!-- Modal de Ideas -->
+  <div id="ideasModal"
+    class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-6">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-8 shadow-2xl relative">
+      <button id="closeIdeas"
+        class="absolute top-6 right-6 text-slate-500 hover:text-white transition text-3xl font-light">&times;</button>
+      <h3 class="text-2xl font-black text-white mb-6 tracking-tight">💡 Ideas para el Podcast</h3>
+      <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-3 custom-scrollbar">
+        <div class="bg-slate-800/30 p-4 rounded-2xl border border-slate-700/50 hover:border-emerald-500/30 transition">
+          <p class="text-emerald-400 text-xs font-black uppercase tracking-widest mb-2">🌅 Despertar Conmigo</p>
+          <p class="text-slate-300 text-sm leading-relaxed">"Bebé, ya te hice el café... pero yo sigo en la cama con
+            frío. ¿Vienes a calentarme?"</p>
         </div>
-
+        <div class="bg-slate-800/30 p-4 rounded-2xl border border-slate-700/50 hover:border-emerald-500/30 transition">
+          <p class="text-emerald-400 text-xs font-black uppercase tracking-widest mb-2">🚿 Ducha Caliente</p>
+          <p class="text-slate-300 text-sm leading-relaxed">"Me estoy bañando y me acordé de lo que me dijiste ayer...
+            me puse a pensar y mira cómo me dejaste."</p>
+        </div>
+        <div class="bg-slate-800/30 p-4 rounded-2xl border border-slate-700/50 hover:border-emerald-500/30 transition">
+          <p class="text-emerald-400 text-xs font-black uppercase tracking-widest mb-2">👭 Confesiones con Amigas</p>
+          <p class="text-slate-300 text-sm leading-relaxed">"Hoy invité a Sofía... y nos pusimos a hablar de cosas que
+            nunca me atreví a preguntarte. Sofi, cuéntanos... ¿cómo fue tu primera vez por detrás?"</p>
+        </div>
+        <div class="bg-slate-800/30 p-4 rounded-2xl border border-slate-700/50 hover:border-emerald-500/30 transition">
+          <p class="text-emerald-400 text-xs font-black uppercase tracking-widest mb-2">🌙 No puedo dormir</p>
+          <p class="text-slate-300 text-sm leading-relaxed">"Te extraño... la cama es demasiado grande sin ti. Cuéntame
+            algo sucio para poder dormir."</p>
+        </div>
       </div>
-    </section>
+    </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    // ─── Socket (solo para modo automático si está activo) ───────────────────
-    try { const socket = io(); } catch (e) { }
+    const socket = io();
 
-    // ─── Copiar links rápidos ────────────────────────────────────────────────
     function copyLink(btn, url) {
       navigator.clipboard.writeText(url).then(() => {
-        const orig = btn.textContent;
-        btn.textContent = '✅ Copiado';
-        setTimeout(() => { btn.textContent = orig; }, 2000);
-      }).catch(() => {
-        const el = document.createElement('textarea');
-        el.value = url;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        const orig = btn.textContent;
-        btn.textContent = '✅ Copiado';
-        setTimeout(() => { btn.textContent = orig; }, 2000);
+        const icon = btn.querySelector('span').textContent;
+        const text = btn.childNodes[btn.childNodes.length - 1].textContent;
+        btn.querySelector('span').textContent = '✅';
+        btn.lastChild.textContent = ' Copiado';
+        setTimeout(() => {
+          btn.querySelector('span').textContent = icon;
+          btn.lastChild.textContent = text;
+        }, 2000);
       });
     }
 
-    // ─── Asistente de Respuestas ─────────────────────────────────────────────
-    const generateReply = document.getElementById('generateReply');
-    const replyInput = document.getElementById('replyInput');
-    const replyPlatform = document.getElementById('replyPlatform');
-    const replyLanguage = document.getElementById('replyLanguage');
-    const replyTone = document.getElementById('replyTone');
-    const replyOutputContainer = document.getElementById('replyOutputContainer');
-    const replyOutput = document.getElementById('replyOutput');
-    const copyReply = document.getElementById('copyReply');
-    const copiedMsg = document.getElementById('copiedMsg');
-    const replyError = document.getElementById('replyError');
+    // --- Audio Studio ---
+    const generateAudio = document.getElementById('generateAudio');
+    const ttsInput = document.getElementById('ttsInput');
+    const ttsVoice = document.getElementById('ttsVoice');
+    const ttsStyle = document.getElementById('ttsStyle');
+    const audioPlayerContainer = document.getElementById('audioPlayerContainer');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const sendToTelegram = document.getElementById('sendToTelegram');
+    const sendToWhatsApp = document.getElementById('sendToWhatsApp');
+    const ttsError = document.getElementById('ttsError');
+    let lastAudioPath = null;
 
-    generateReply.addEventListener('click', async () => {
-      const message = replyInput.value.trim();
-      if (!message) {
-        replyError.textContent = '⚠️ Pega primero el mensaje del cliente';
-        replyError.classList.remove('hidden');
-        return;
-      }
-      replyError.classList.add('hidden');
-      replyOutputContainer.classList.add('hidden');
-      generateReply.disabled = true;
-      generateReply.innerHTML = '<span>⏳</span> Generando respuesta...';
+    generateAudio.addEventListener('click', async () => {
+      const text = ttsInput.value.trim();
+      if (!text) return alert('Escribe el guion o usa una ídea');
+      generateAudio.disabled = true;
+      generateAudio.innerHTML = '⏳ Generando Audio Estelar...';
       try {
-        const r = await fetch('/api/generate-reply', {
+        const r = await fetch('/api/generate-audio', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message,
-            platform: replyPlatform.value,
-            language: replyLanguage.value,
-            tone: replyTone.value
-          })
+          body: JSON.stringify({ text, voice: ttsVoice.value, style: ttsStyle.value })
         });
         const data = await r.json();
-        if (data.ok && data.reply) {
-          replyOutput.value = data.reply;
-          replyOutputContainer.classList.remove('hidden');
-          replyOutput.focus();
-        } else {
-          replyError.textContent = data.error || 'Error generando respuesta';
-          replyError.classList.remove('hidden');
-        }
-      } catch (e) {
-        replyError.textContent = 'Error de red: ' + e.message;
-        replyError.classList.remove('hidden');
-      }
-      generateReply.disabled = false;
-      generateReply.innerHTML = '<span>🤖</span> GENERAR RESPUESTA CON IA';
+        if (data.ok) {
+          audioPlayer.src = `data:audio/mp3;base64,${data.audioBase64}`;
+          audioPlayerContainer.classList.remove('hidden');
+          lastAudioPath = data.path;
+          audioPlayer.play();
+        } else alert(data.error);
+      } catch (e) { alert(e.message); }
+      generateAudio.disabled = false;
+      generateAudio.innerHTML = '<span class="text-xl">🔊</span> GENERAR Y ESCUCHAR AUDIO';
     });
 
-    copyReply.addEventListener('click', () => {
-      if (!replyOutput.value) return;
-      navigator.clipboard.writeText(replyOutput.value).then(() => {
-        copiedMsg.classList.remove('hidden');
-        copyReply.textContent = '✅ Copiado';
-        setTimeout(() => {
-          copiedMsg.classList.add('hidden');
-          copyReply.textContent = '📋 Copiar';
-        }, 2500);
-      });
+    sendToTelegram.addEventListener('click', () => sendAudio('telegram'));
+    sendToWhatsApp.addEventListener('click', () => sendAudio('whatsapp'));
+
+    async function sendAudio(target) {
+      if (!lastAudioPath) return;
+      try {
+        const r = await fetch('/api/send-audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ audioPath: lastAudioPath, target })
+        });
+        const data = await r.json();
+        if (data.ok) alert(`✅ Audio estelar enviado a ${target === 'telegram' ? 'Gestión de Clientes (TG)' : 'WhatsApp'}`);
+        else alert(data.error);
+      } catch (e) { alert(e.message); }
+    }
+
+    // --- WhatsApp Connection UI ---
+    const waQrContainer = document.getElementById('waQrContainer');
+    const waQrImg = document.getElementById('waQrImg');
+    const waSuccessPanel = document.getElementById('waSuccessPanel');
+    const waBadge = document.getElementById('waBadge');
+    const waStatusText = document.getElementById('waStatusText');
+
+    socket.on('qr', (dataUrl) => {
+      waQrImg.src = dataUrl;
+      waQrContainer.classList.remove('hidden');
+      waSuccessPanel.classList.add('hidden');
+      waBadge.className = 'px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-[10px] font-bold tracking-widest uppercase';
+      waBadge.innerText = 'Escaneando...';
+      waStatusText.innerText = 'Escanea el código QR para vincular WhatsApp.';
     });
+
+    socket.on('ready', (ready) => {
+      if (ready) {
+        waQrContainer.classList.add('hidden');
+        waSuccessPanel.classList.remove('hidden');
+        waBadge.className = 'px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-bold tracking-widest uppercase';
+        waBadge.innerText = 'Conectado';
+        waStatusText.innerText = 'Sistema de espejo y respuesta activa.';
+      } else {
+        waBadge.innerText = 'Desconectado';
+        waStatusText.innerText = 'Inicia el servidor para ver el QR.';
+      }
+    });
+
+    // --- Prompt Studio ---
+    const generatePrompt = document.getElementById('generatePrompt');
+    const promptScenario = document.getElementById('promptScenario');
+    const promptFormat = document.getElementById('promptFormat');
+    const promptExtra = document.getElementById('promptExtra');
+    const promptOutputContainer = document.getElementById('promptOutputContainer');
+    const promptOutput = document.getElementById('promptOutput');
+
+    const templates = {
+      luxury: "Ultra-realistic 8k cinematography of a stunning model with an extreme curvy hourglass figure, luxury bedroom, lencerie, moody lighting, intense eye contact.",
+      field: "Hyper-realistic 8k photography of a beautiful model with curvy figure in a sun-drenched coffee plantation, wearing tight denim, natural skin textures, sweat beads.",
+      river: "Cinematic 8k shot of a curvy model kneeling in a tropical river, crystal water, wet tank top clinging to body, jungle foliage, seductive smile.",
+      night: "Realistic 8k nightlife shot of a stunning baddie, neon lights, party setting, revealing outfit, motion blur, direct gaze."
+    };
+
+    const formats = {
+      reels: "--ar 9:16 --v 6.0",
+      post: "--ar 4:5 --v 6.0",
+      video: "--ar 16:9 --v 6.0"
+    };
+
+    generatePrompt.addEventListener('click', () => {
+      const scenario = templates[promptScenario.value];
+      const format = formats[promptFormat.value];
+      const extra = promptExtra.value.trim();
+
+      const fullPrompt = `${scenario} ${extra ? 'Details: ' + extra : ''} ${format}`;
+      promptOutput.textContent = fullPrompt;
+      promptOutputContainer.classList.remove('hidden');
+    });
+
+    window.copyRawPrompt = () => {
+      navigator.clipboard.writeText(promptOutput.textContent).then(() => {
+        alert('Prompt copiado mor! Pégalo en tu explorador con Grok.');
+      });
+    };
+
+    // --- Modal Ideas ---
+    const showIdeas = document.getElementById('showIdeas');
+    const ideasModal = document.getElementById('ideasModal');
+    const closeIdeas = document.getElementById('closeIdeas');
+    showIdeas.onclick = () => ideasModal.classList.remove('hidden');
+    closeIdeas.onclick = () => ideasModal.classList.add('hidden');
   </script>
 </body>
 

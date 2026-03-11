@@ -1,1 +1,2 @@
-"""Módulo de modelos de IA"""
+from .ai_handler import AIHandler
+from .voice_handler import VoiceHandler

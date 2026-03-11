@@ -1,103 +1,79 @@
+const { Telegraf } = require('telegraf');
 const path = require('path');
 const fs = require('fs');
 
-let io = null;
-let telegramConnected = true;
-const telegramEmbudo = {}; // chatId -> { phase, messageCount, userName }
+// Configuración de Telegram
+const botToken = process.env.TELEGRAM_BOT_TOKEN;
+const operacionesId = process.env.TELEGRAM_OPERACIONES_ID || process.env.TELEGRAM_CHAT_ID;
 
-const QUEUE_FILE = path.join(__dirname, 'data', 'voice_queue.json');
-
-// Asegurar que la carpeta data existe
-if (!fs.existsSync(path.join(__dirname, 'data'))) {
-  fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
+if (!botToken) {
+    console.error('[telegram_bot] ERROR: TELEGRAM_BOT_TOKEN no definido en .env');
 }
 
-function emitStatus(connected, errorMessage = null) {
-  telegramConnected = connected;
-  if (io) {
-    io.emit('telegram_status', {
-      connected,
-      error: errorMessage || null
+const bot = new Telegraf(botToken);
+let ioInstance = null;
+
+// Mapa de audios generados recientemente para el dashboard
+const audioCache = new Map();
+
+/**
+ * Inicia el bot de Telegram y permite la interacción con el Dashboard (Socket.io)
+ */
+function start(io) {
+    ioInstance = io;
+
+    if (!botToken) return;
+
+    bot.on('voice', async (ctx) => {
+        // Si el mensaje viene del grupo de operaciones, ignorar para este bot simple
+        if (ctx.chat.id.toString() === operacionesId) return;
+
+        // Si viene de un chat privado, notificar al grupo de operaciones
+        try {
+            if (operacionesId) {
+                await ctx.telegram.forwardMessage(operacionesId, ctx.chat.id, ctx.message.message_id);
+            }
+        } catch (e) {
+            console.error('[telegram_bot] Error reenviando audio:', e.message);
+        }
     });
-  }
-}
 
-function emitMessage(payload) {
-  if (io) io.emit('telegram_message', payload);
-}
+    bot.on('message', async (ctx) => {
+        // Evitar que el bot se responda a sí mismo o procese cosas del grupo
+        if (ctx.chat.id.toString() === operacionesId) return;
 
-function emitEmbudo() {
-  if (io) io.emit('telegram_embudo', Object.values(telegramEmbudo));
-}
+        // Si es un mensaje privado, reenviar al grupo de operaciones (Espejo)
+        try {
+            if (operacionesId && ctx.message.text) {
+                await ctx.telegram.sendMessage(operacionesId, `💬 Mensaje de ${ctx.from.first_name || 'Usuario'} (@${ctx.from.username || 'n/a'}):\n${ctx.message.text}`);
+            }
+        } catch (e) {
+            console.error('[telegram_bot] Error en espejo Telegram:', e.message);
+        }
+    });
 
-function updateTelegramEmbudo(chatId, userName, body, askedFanvue) {
-  const prev = telegramEmbudo[chatId] || { chatId, userName, phase: 1, messageCount: 0 };
-  prev.userName = userName;
-  prev.messageCount = (prev.messageCount || 0) + 1;
-  if (askedFanvue) prev.phase = 3;
-  else if (prev.messageCount >= 3 && prev.phase < 3) prev.phase = 2;
-  telegramEmbudo[chatId] = prev;
-  emitEmbudo();
-}
+    // bot.launch() omitido para evitar conflicto 409 con telegram_bot.py
+    // El bot JS solo se usa para enviar audios, no para recibir.
+    console.log('[telegram_bot] Funciones de envío activadas (Polling deshabilitado para JS)');
 
-/**
- * Inicia el bot de Telegram.
- * NOTA: En este entorno, Node.js tiene problemas de red HTTPS.
- * El bot real corre en Python (telegram_bot.py) y lee una cola de este script.
- */
-function start(socketIo) {
-  io = socketIo;
-  emitStatus(true); // Engañamos al dashboard para que piense que está listo
-  console.log('Bot de Telegram (Puente Node->Python) activo.');
-}
-
-function isConnected() {
-  return true; // Siempre true en modo puente
+    // Manejo de cierre gracioso
+    process.once('SIGINT', () => bot.stop('SIGINT'));
+    process.once('SIGTERM', () => bot.stop('SIGTERM'));
 }
 
 /**
- * En lugar de enviar directamente (que falla en Node), escribimos en una cola
- * que el bot de Python procesará.
+ * Envía un archivo de voz (buffer) al grupo de operaciones o al último chat activo
  */
-async function sendVoice(buffer, caption = '') {
-  console.log('[DEBUG] Encolando audio para envío vía Python...');
-
-  // Guardamos el buffer en un archivo temporal para que Python lo lea
-  const timestamp = Date.now();
-  const audioFileName = `queue_${timestamp}.mp3`;
-  const audioFilePath = path.join(__dirname, '..', 'generated_audios', audioFileName);
-
-  if (!fs.existsSync(path.dirname(audioFilePath))) {
-    fs.mkdirSync(path.dirname(audioFilePath), { recursive: true });
-  }
-
-  fs.writeFileSync(audioFilePath, buffer);
-
-  const request = {
-    audioPath: audioFilePath,
-    caption: caption,
-    timestamp: timestamp,
-    sent: false
-  };
-
-  try {
-    let queue = [];
-    if (fs.existsSync(QUEUE_FILE)) {
-      try {
-        const content = fs.readFileSync(QUEUE_FILE, 'utf-8');
-        queue = JSON.parse(content || '[]');
-      } catch (e) {
-        queue = [];
-      }
+async function sendVoice(buffer, chatId = null) {
+    const targetId = chatId || operacionesId;
+    if (!targetId || !botToken) {
+        throw new Error('No hay ID de destino o token de bot');
     }
-    queue.push(request);
-    fs.writeFileSync(QUEUE_FILE, JSON.stringify(queue, null, 2));
-    console.log('✅ [DEBUG] Audio encolado con éxito para Python.');
-    return { ok: true, note: 'Encolado para Python' };
-  } catch (err) {
-    console.error('❌ [DEBUG] Error al escribir en la cola de voz:', err.message);
-    throw err;
-  }
+
+    return bot.telegram.sendVoice(targetId, { source: buffer });
 }
 
-module.exports = { start, isConnected, emitStatus, sendVoice };
+module.exports = {
+    start,
+    sendVoice
+};

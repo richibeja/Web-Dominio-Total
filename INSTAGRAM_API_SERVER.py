@@ -46,7 +46,9 @@ def get_ai_response(user_text, username):
         import asyncio
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        response = loop.run_until_complete(handler.get_response(user_text, user_id=username, platform="instagram"))
+        # Determinar si es comentario o DM basado en una flag o el nombre del usuario
+        platform = "instagram_comment" if username.startswith("comment_") else "instagram"
+        response = loop.run_until_complete(handler.get_response(user_text, user_id=username, platform=platform))
         loop.close()
         return response
     except Exception as e:
@@ -64,7 +66,19 @@ def send_message(recipient_id, text):
         logger.info(f"Respuesta envío: {r.status_code} - {r.text}")
         return r.status_code == 200
     except Exception as e:
-        logger.error(f"Error enviando: {e}")
+        logger.error(f"Error enviando DM: {e}")
+        return False
+
+def reply_comment(comment_id, text):
+    """Responde a un comentario público en un post."""
+    url = f"https://graph.facebook.com/v19.0/{comment_id}/replies?access_token={ACCESS_TOKEN}"
+    payload = {"message": text}
+    try:
+        r = requests.post(url, json=payload, timeout=10)
+        logger.info(f"Respuesta comentario: {r.status_code} - {r.text}")
+        return r.status_code == 200
+    except Exception as e:
+        logger.error(f"Error respondiendo comentario {comment_id}: {e}")
         return False
 
 @app.route("/webhook/instagram", methods=["GET"])
@@ -84,31 +98,46 @@ def webhook():
         return "OK", 200
 
     for entry in data["entry"]:
+        # 1. Manejar DMs (messaging)
         for messaging_event in entry.get("messaging", []):
             if "message" in messaging_event:
                 sender_id = messaging_event["sender"]["id"]
                 message_text = messaging_event["message"].get("text")
-                
                 if not message_text: continue
+                logger.info(f"📩 Nuevo DM de {sender_id}: {message_text}")
                 
-                logger.info(f"📩 Nuevo mensaje de {sender_id}: {message_text}")
-                
-                # 1. Enviar a Telegram Operaciones para el equipo
                 try:
-                    from shared.telegram_operaciones import send_instagram_dm_to_telegram, is_waiting_for_human
-                    # Enviar notificación a Telegram
+                    from shared.telegram_operaciones import send_instagram_dm_to_telegram
                     send_instagram_dm_to_telegram(f"ID_{sender_id}", message_text)
-                except Exception as e:
-                    logger.error(f"Error enviando a Telegram: {e}")
+                except: pass
 
-                # 2. Generar respuesta con IA (Aurora)
-                # VERIFICACIÓN DE SEGURIDAD: Solo responde si no hay una intervención humana activa
                 ai_reply = get_ai_response(message_text, sender_id)
-                
-                # 3. Responder por Instagram
                 if ai_reply:
-                    logger.info(f"✍️ Respondiendo a {sender_id}: {ai_reply}")
                     send_message(sender_id, ai_reply)
+
+        # 2. Manejar Comentarios (changes)
+        for change in entry.get("changes", []):
+            if change.get("field") == "comments":
+                comment_value = change.get("value", {})
+                comment_id = comment_value.get("id")
+                comment_text = comment_value.get("text")
+                from_user = comment_value.get("from", {})
+                username = from_user.get("username", "user")
+
+                if not comment_id or not comment_text: continue
+                # Evitar responder a Aurora misma (si el webhook lo envía)
+                my_id = os.getenv("INSTAGRAM_BUSINESS_USER_ID")
+                sender_id_comment = from_user.get("id")
+                
+                if sender_id_comment == my_id:
+                    continue # Es mi propio comentario, no respondo
+
+                logger.info(f"💬 Nuevo comentario de @{username} (ID: {sender_id_comment}): {comment_text}")
+
+                ai_reply = get_ai_response(comment_text, f"comment_{username}")
+                if ai_reply:
+                    logger.info(f"✍️ Respondiendo a comentario: {ai_reply}")
+                    reply_comment(comment_id, ai_reply)
 
     return "OK", 200
 

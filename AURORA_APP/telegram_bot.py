@@ -208,62 +208,90 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 async def _client_text_mirror(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
-    Sistema Espejo: todo mensaje de texto de un cliente (que no sea comando) se reenvía
-    al grupo de operaciones con formato estándar. Se guarda el message_id para que un
-    REPLY en el grupo se envíe de vuelta al cliente.
+    Sistema Espejo: todo mensaje de texto de un cliente se reenvía al grupo de operaciones.
+    Ahora también detecta comentarios en el canal y responde automáticamente.
     """
     if not TELEGRAM_OPERACIONES_ID:
         return
     try:
-        group_id = int(TELEGRAM_OPERACIONES_ID)
+        group_id_ops = int(TELEGRAM_OPERACIONES_ID)
     except ValueError:
         return
-    if update.effective_chat.type != "private" or not update.message or not update.message.text:
-        return
+
+    chat = update.effective_chat
     user = update.effective_user
-    user_id = user.id if user else update.effective_chat.id
+    msg = update.message
+    
+    if not chat or not msg or not msg.text:
+        return
+
+    # 1. Detectar tipo de chat: Privado o Comentario en Grupo
+    is_private = chat.type == "private"
+    is_comment = False
+    
+    # Un comentario en Telegram es un reply a un post "automatic forward" del canal en el grupo de discusión
+    if chat.type in ["group", "supergroup"] and msg.reply_to_message:
+        if msg.reply_to_message.is_automatic_forward:
+            is_comment = True
+            # Evitar que el bot se responda a sí mismo o a otros bots en el grupo
+            if user and user.is_bot:
+                return
+
+    if not (is_private or is_comment):
+        return
+
+    user_id = user.id if user else chat.id
     nombre = (user.first_name or "") if user else ""
     if user and user.last_name:
         nombre = f"{nombre} {user.last_name}".strip()
     nombre = nombre or "Cliente"
-    texto = (update.message.text or "").strip()
-    if not texto:
-        return
-        
-    # Guardar como último cliente activo para envío de audios
-    global _last_client_id
-    _last_client_id = user_id
+    texto = msg.text.strip()
+    
+    # Guardar como último cliente activo para envío de audios si es privado
+    if is_private:
+        global _last_client_id
+        _last_client_id = user_id
 
-    msg_para_grupo = (
-        "📥 NUEVO MENSAJE\n"
-        f"ID: {user_id}\n"
-        f"Cliente: {nombre}\n"
-        f"Dice: {texto}\n"
-        "-------------------------"
-    )
+    # Espejo al grupo de operaciones para DMs privados solamente (para no saturar el grupo con comentarios públicos)
+    if is_private:
+        msg_para_grupo = (
+            "📥 NUEVO MENSAJE PRIVADO\n"
+            f"ID: {user_id}\n"
+            f"Cliente: {nombre}\n"
+            f"Dice: {texto}\n"
+            "-------------------------"
+        )
+        try:
+            sent = await context.bot.send_message(chat_id=group_id_ops, text=msg_para_grupo)
+            _reply_map[(group_id_ops, sent.message_id)] = chat.id
+        except Exception as e:
+            print(f"[telegram_bot] Error espejo: {e}")
+
+    # --- RESPUESTA IA Automática ---
     try:
-        sent = await context.bot.send_message(chat_id=group_id, text=msg_para_grupo)
-        _reply_map[(group_id, sent.message_id)] = update.effective_chat.id
-        
-        # --- NUEVO: Respuesta IA Automática ---
-        # "Escribiendo..." para naturalidad
-        await context.bot.send_chat_action(chat_id=user_id, action="typing")
+        # Acción de chat para naturalidad
+        await context.bot.send_chat_action(chat_id=chat.id, action="typing")
         
         from ai_models.ai_handler import AIHandler
         ai = AIHandler()
         
-        # Simular tiempo de pensamiento/escritura (2.5s por defecto)
-        import asyncio
-        await asyncio.sleep(2.5)
+        # Determinar plataforma para el prompt
+        platform = "telegram_comment" if is_comment else "telegram"
         
-        respuesta = await ai.get_response(texto, user_id=str(user_id), dialect="paisa", platform="telegram")
+        # Simular tiempo de escritura (2s a 5s)
+        import asyncio
+        import random
+        await asyncio.sleep(random.uniform(2.0, 5.0))
+        
+        respuesta = await ai.get_response(texto, user_id=str(user_id), dialect="paisa", platform=platform)
         if respuesta:
-            await context.bot.send_message(chat_id=user_id, text=respuesta)
-            # También avisamos al grupo que respondimos
-            await context.bot.send_message(chat_id=group_id, text=f"🤖 Aurora respondió a {nombre}: {respuesta}")
+            await msg.reply_text(respuesta)
+            if is_private:
+                # Avisar al grupo de operaciones que respondimos el privado
+                await context.bot.send_message(chat_id=group_id_ops, text=f"🤖 Aurora respondió a {nombre}: {respuesta}")
             
     except Exception as e:
-        print(f"[telegram_bot] Error reenviando o respondiendo: {e}")
+        print(f"[telegram_bot] Error en respuesta IA: {e}")
 
 async def _client_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Recibe nota de voz del cliente en privado, la transcribe y la responde con voz realista."""
@@ -562,21 +590,31 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         if reply.voice:
             media_to_send = reply.voice.file_id
             media_type = 'voice'
+        elif reply.video:
+            media_to_send = reply.video.file_id
+            media_type = 'video'
+        elif reply.photo:
+            media_to_send = reply.photo[-1].file_id # Tomar la de mayor resolución
+            media_type = 'photo'
         elif reply.audio:
             media_to_send = reply.audio.file_id
             media_type = 'audio'
         elif reply.text:
             broadcast_text = reply.text
             media_type = 'text'
+        
+        # Mantener el caption original si hay uno
+        caption = reply.caption if reply.caption else ""
     
     # Si no hay media de un reply, buscar texto en el comando
     if not media_type:
         parts = update.message.text.split(maxsplit=1)
         if len(parts) < 2:
-            await update.message.reply_text("Uso: /broadcast [mensaje] o haz REPLY a un audio con /broadcast")
+            await update.message.reply_text("Uso: /broadcast [mensaje] o haz REPLY a un video/foto/audio con /broadcast")
             return
         broadcast_text = parts[1].strip()
         media_type = 'text'
+        caption = ""
 
     if not CLIENTES_LOG.exists():
         await update.message.reply_text("No hay clientes registrados aún.")
@@ -599,9 +637,13 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         for uid in user_ids:
             try:
                 if media_type == 'voice':
-                    await context.bot.send_voice(chat_id=uid, voice=media_to_send)
+                    await context.bot.send_voice(chat_id=uid, voice=media_to_send, caption=caption)
+                elif media_type == 'video':
+                    await context.bot.send_video(chat_id=uid, video=media_to_send, caption=caption)
+                elif media_type == 'photo':
+                    await context.bot.send_photo(chat_id=uid, photo=media_to_send, caption=caption)
                 elif media_type == 'audio':
-                    await context.bot.send_audio(chat_id=uid, audio=media_to_send)
+                    await context.bot.send_audio(chat_id=uid, audio=media_to_send, caption=caption)
                 else:
                     await context.bot.send_message(chat_id=uid, text=broadcast_text)
                 success_count += 1
@@ -622,9 +664,13 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                     chan_target = int(TELEGRAM_CHANNEL_ID)
                 
                 if media_type == 'voice':
-                    await context.bot.send_voice(chat_id=chan_target, voice=media_to_send)
+                    await context.bot.send_voice(chat_id=chan_target, voice=media_to_send, caption=caption)
+                elif media_type == 'video':
+                    await context.bot.send_video(chat_id=chan_target, video=media_to_send, caption=caption)
+                elif media_type == 'photo':
+                    await context.bot.send_photo(chat_id=chan_target, photo=media_to_send, caption=caption)
                 elif media_type == 'audio':
-                    await context.bot.send_audio(chat_id=chan_target, audio=media_to_send)
+                    await context.bot.send_audio(chat_id=chan_target, audio=media_to_send, caption=caption)
                 else:
                     await context.bot.send_message(chat_id=chan_target, text=broadcast_text)
                 sent_to_channel = True
@@ -978,19 +1024,35 @@ async def _handle_all_groups(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return
 
     try:
-        # "Escribiendo..."
+        # Acción de "Escribiendo..." para naturalidad
         await context.bot.send_chat_action(chat_id=chat_id, action="typing")
         
-        # Generar respuesta IA (Paisa Seductora)
-        # En canales, effective_user puede ser None
+        # Detectar si es un comentario (Reply a un post del canal)
+        is_comment = False
+        if msg.reply_to_message and msg.reply_to_message.is_automatic_forward:
+            is_comment = True
+
+        # Determinar plataforma (prompt)
+        # Si es comentario, usar estilo público. Si es un grupo normal, usar estilo Telegram estándar.
+        platform = "telegram_comment" if is_comment else "telegram"
+        
+        # Simular tiempo de escritura (2s a 5s)
+        import asyncio
+        import random
+        await asyncio.sleep(random.uniform(2.5, 5.0))
+        
         uid = str(update.effective_user.id) if update.effective_user else str(chat_id)
-        response = await _ai_handler.process_direct_text_only(text, user_id=uid, dialect="paisa")
+        # Usar el handler de IA con la plataforma adecuada
+        response = await _ai_handler.get_response(text, user_id=uid, dialect="paisa", platform=platform)
         
         if response:
-            await update.message.reply_text(response) if update.message else await context.bot.send_message(chat_id=chat_id, text=response)
+            if msg:
+                await msg.reply_text(response)
+            else:
+                await context.bot.send_message(chat_id=chat_id, text=response)
             
     except Exception as e:
-        print(f"[telegram_bot] Error IA en grupo público: {e}")
+        print(f"[telegram_bot] Error IA en grupo público/canal: {e}")
 
 
 if __name__ == "__main__":
